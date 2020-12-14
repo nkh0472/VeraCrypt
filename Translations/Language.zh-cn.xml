@@ -1477,7 +1477,7 @@
     <entry lang="en" key="LINUX_ADMIN_PW_QUERY_TITLE">需要管理员权限</entry>
     <entry lang="en" key="LINUX_VC_RUNNING_ALREADY">VeraCrypt 已经在运行了。</entry>
     <entry lang="en" key="LINUX_SYSTEM_ENC_PW_LENGTH_NOTE">系统加密密码长于 {0} 个字符。</entry>
-    <entry lang="en" key="LINUX_MOUNT_SYSTEM_ENC_PREBOOT">使用系统加密装载分区(preboot身份验证) (&amp;u)</entry>
+    <entry lang="en" key="LINUX_MOUNT_SYSTEM_ENC_PREBOOT">使用系统加密装载分区(引导前身份验证) (&amp;u)</entry>
     <entry lang="en" key="LINUX_DO_NOT_MOUNT">不要装载(&amp;)</entry>
     <entry lang="en" key="LINUX_MOUNT_AT_DIR">装载于目录:</entry>
     <entry lang="en" key="LINUX_SELECT">选择...(&amp;)</entry>
@@ -1505,31 +1505,31 @@
     <entry lang="en" key="LINUX_ERROR">错误</entry>
     <entry lang="en" key="LINUX_ONLY_TEXTMODE">本功能当前仅支持文本模式。</entry>
     <entry lang="en" key="LINUX_FREE_SPACE_ON_DRIVE">盘 {0} 的剩余可用空间为：{1}。</entry>
-    <entry lang="en" key="LINUX_DYNAMIC_NOTICE">Please note that if your operating system does not allocate files from the beginning of the free space, the maximum possible hidden volume size may be much smaller than the size of the free space on the outer volume. This is not a bug in VeraCrypt but a limitation of the operating system.</entry>
+    <entry lang="en" key="LINUX_DYNAMIC_NOTICE">请注意，如果您的操作系统没有从可用空间的起始处为文件分配空间，则最大隐藏卷大小可能远小于外部卷上的可用空间大小。这不是VeraCrypt中的错误，而是操作系统的限制。</entry>
     <entry lang="en" key="LINUX_MAX_HIDDEN_SIZE">此卷的最大隐藏卷空间为{0}。</entry>
     <entry lang="en" key="LINUX_OPEN_OUTER_VOL">打开外层卷</entry>
-    <entry lang="en" key="LINUX_OUTER_VOL_IS_MOUNTED">Outer volume has been successfully created and mounted as '{0}'. To this volume you should now copy some sensitive-looking files that you actually do NOT want to hide. The files will be there for anyone forcing you to disclose your password. You will reveal only the password for this outer volume, not for the hidden one. The files that you really care about will be stored in the hidden volume, which will be created later on. When you finish copying, click Next. Do not dismount the volume.\n\nNote: After you click Next, the outer volume will be analyzed to determine the size of uninterrupted area of free space whose end is aligned with the end of the volume. This area will accommodate the hidden volume, so it will limit its maximum possible size. The procedure ensures no data on the outer volume are overwritten by the hidden volume.</entry>
+    <entry lang="en" key="LINUX_OUTER_VOL_IS_MOUNTED">外层加密卷已成功创建将其装载为{0}驱动器。对这个加密卷，现在您应复制一些您不是真正要隐藏的貌似敏感的文件。这是让那些强迫您泄漏密码的人能看到的文件。您将仅对这个外层加密卷泄漏密码，而不要泄漏给他们隐藏加密卷的密码。您真正要保护的文件将被存储在稍候创建的隐藏加密卷里。当您完成复制后，请单击〖下一步〗，并且不要卸载此加密卷。\n\n注意：单击〖下一步〗后，将进行簇状图扫描来确定连续的自由空间大小，此自由空间的尾部与加密卷尾部一致。该空间将提供用来创建隐藏加密卷同时也是隐藏加密卷的最大容量。簇状图扫描能够保证外层加密中卷的数据不会被隐藏卷覆盖。</entry>
     <entry lang="en" key="LINUX_ERROR_TRY_ENCRYPT_SYSTEM_DRIVE">错误：您正在试图加密系统盘。\n\nVeraCrypt仅支持在Windows下加密系统盘。</entry>
     <entry lang="en" key="LINUX_ERROR_TRY_ENCRYPT_SYSTEM_PARTITION">错误：您正在试图加密系统分区。\n\nVeraCrypt仅支持在Windows下加密系统分区。</entry>
     <entry lang="en" key="LINUX_WARNING_FORMAT_DESTROY_FS">警告：格式化设备会清楚盘'{0}'上的所有数据。\n\n您确定要继续吗？</entry>
     <entry lang="en" key="LINUX_MOUNTET_HINT">所选设备的文件系统当前已被装载。若要继续操作，请先卸载'{0}'。</entry>
     <entry lang="en" key="LINUX_HIDDEN_PASS_NO_DIFF">隐藏卷不能具有与外层卷相同的密码、PIM或密钥文件。</entry>
-    <entry lang="en" key="LINUX_NOT_FAT_HINT">Please note that the volume will not be formatted with a FAT filesystem and, therefore, you may be required to install additional filesystem drivers on platforms other than {0}, which will enable you to mount the volume.</entry>
-    <entry lang="en" key="LINUX_ERROR_SIZE_HIDDEN_VOL">Error: The hidden volume to be created is larger than {0} TB ({1} GB).\n\nPossible solutions:\n- Create a container/partition smaller than {0} TB.\n</entry>
+    <entry lang="en" key="LINUX_NOT_FAT_HINT">请注意，卷不会被格式化为FAT文件系统，因此，您可能需要在{0}以外的平台上额外安装文件系统驱动程序，以使您能够装载卷。</entry>
+    <entry lang="en" key="LINUX_ERROR_SIZE_HIDDEN_VOL">错误：要创建的隐藏卷大于 {0} TB ({1} GB)。\n\n可能的解决方案为：\n-创建小于{0} TB的容器/分区。\n</entry>
     <entry lang="en" key="LINUX_MAX_SIZE_HINT">- Use a drive with 4096-byte sectors to be able to create partition/device-hosted hidden volumes up to 16 TB in size</entry>
     <entry lang="en" key="LINUX_DOT_LF">.\n</entry>
     <entry lang="en" key="LINUX_NOT_SUPPORTED"> (not supported by components available on this platform).\n</entry>
-    <entry lang="en" key="LINUX_KERNEL_OLD">Your system uses an old version of the Linux kernel.\n\nDue to a bug in the Linux kernel, your system may stop responding when writing data to a VeraCrypt volume. This problem can be solved by upgrading the kernel to version 2.6.24 or later.</entry>
+    <entry lang="en" key="LINUX_KERNEL_OLD">您的系统使用了旧版本的Linux内核。\n\n由于Linux内核中的错误，您的系统可能在向VeraCrypt卷写入数据时停止响应。这个问题可以通过将内核升级到2.6.24或更高版本来解决。</entry>
     <entry lang="en" key="LINUX_VOL_DISMOUNTED">卷{0}已卸载。</entry>
     <entry lang="en" key="LINUX_OOM">内存不足。</entry>
     <entry lang="en" key="LINUX_CANT_GET_ADMIN_PRIV">获取管理员权限失败。</entry>
     <entry lang="en" key="LINUX_COMMAND_GET_ERROR">命令{0}返回了错误{1}。</entry>
     <entry lang="en" key="LINUX_CMD_HELP">VeraCrypt Command Line Help</entry>
-    <entry lang="en" key="LINUX_HIDDEN_FILES_PRESENT_IN_KEYFILE_PATH">\n\nWarning: Hidden files are present in a keyfile path. If you need to use them as keyfiles, remove the leading dot from their filenames. Hidden files are visible only if enabled in system options.</entry>
+    <entry lang="en" key="LINUX_HIDDEN_FILES_PRESENT_IN_KEYFILE_PATH">\n\n警告：密钥文件路径中存在隐藏文件。如果需要将它们用作密钥文件，请从它们的文件名中删除句点前缀。只有在“系统选项”中启用隐藏文件时，隐藏文件才可见。</entry>
     <entry lang="en" key="LINUX_EX2MSG_DEVICESECTORSIZEMISMATCH">Storage device and VC volume sector size mismatch</entry>
     <entry lang="en" key="LINUX_EX2MSG_ENCRYPTEDSYSTEMREQUIRED">This operation must be performed only when the system hosted on the volume is running.</entry>
     <entry lang="en" key="LINUX_EX2MSG_INSUFFICIENTDATA">可用数据不足。</entry>
-    <entry lang="en" key="LINUX_EX2MSG_KERNELCRYPTOSERVICETESTFAILED">Kernel cryptographic service test failed. The cryptographic service of your kernel most likely does not support volumes larger than 2 TB.\n\nPossible solutions:\n- Upgrade the Linux kernel to version 2.6.33 or later.\n- Disable use of the kernel cryptographic services (Settings > Preferences > System Integration) or use 'nokernelcrypto' mount option on the command line.</entry>
+    <entry lang="en" key="LINUX_EX2MSG_KERNELCRYPTOSERVICETESTFAILED">内核加密服务测试失败。内核的加密服务很可能不支持大于2 TB的卷。\n\n可能的解决方案：\n- 将Linux内核升级到2.6.33或更高版本。\n- 禁用内核加密服务（“设置”>“首选项”>“系统集成”）或在命令行上使用“nokernelcrypto”装载选项。</entry>
     <entry lang="en" key="LINUX_EX2MSG_LOOPDEVICESETUPFAILED">Failed to set up a loop device.</entry>
     <entry lang="en" key="LINUX_EX2MSG_MISSINGARGUMENT">缺少必要参数。</entry>
     <entry lang="en" key="LINUX_EX2MSG_MISSINGVOLUMEDATA">Volume data missing.</entry>
