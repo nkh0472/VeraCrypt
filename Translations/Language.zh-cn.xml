@@ -1524,7 +1524,7 @@
     <entry lang="en" key="LINUX_OOM">内存不足。</entry>
     <entry lang="en" key="LINUX_CANT_GET_ADMIN_PRIV">获取管理员权限失败。</entry>
     <entry lang="en" key="LINUX_COMMAND_GET_ERROR">命令{0}返回了错误{1}。</entry>
-    <entry lang="en" key="LINUX_CMD_HELP">VeraCrypt Command Line Help</entry>
+    <entry lang="en" key="LINUX_CMD_HELP">VeraCrypt 命令行帮助</entry>
     <entry lang="en" key="LINUX_HIDDEN_FILES_PRESENT_IN_KEYFILE_PATH">\n\n警告：密钥文件路径中存在隐藏文件。如果需要将它们用作密钥文件，请从它们的文件名中删除句点前缀。只有在“系统选项”中启用隐藏文件时，隐藏文件才可见。</entry>
     <entry lang="en" key="LINUX_EX2MSG_DEVICESECTORSIZEMISMATCH">Storage device and VC volume sector size mismatch</entry>
     <entry lang="en" key="LINUX_EX2MSG_ENCRYPTEDSYSTEMREQUIRED">This operation must be performed only when the system hosted on the volume is running.</entry>
@@ -1548,8 +1548,8 @@
     <entry lang="en" key="LINUX_EX2MSG_UNSUPPORTEDSECTORSIZEHIDDENVOLUMEPROTECTION">错误：驱动器的扇区大小不是512字节。\n\n由于您平台上可用组件的限制，无法通过隐藏卷保护的方式装载驱动器上承载的该外部卷。\n\n可能的解决方案：\n- 使用具有512字节扇区的驱动器。\n- 在驱动器上创建容器文件托管卷。\n- 备份隐藏卷，然后更新外部卷。</entry>
     <entry lang="en" key="LINUX_EX2MSG_UNSUPPORTEDSECTORSIZENOKERNELCRYPTO">错误：驱动器的扇区大小不是512字节。\n\n由于您平台上可用组件的限制，驱动器上的承载于分区/设备上的卷只能通过内核加密服务装入。\n\n可能的解决方案：\n- 启用内核加密服务（“首选项”>“系统集成”）。\n- 使用具有512字节扇区的驱动器。\n- 在驱动器上创建容器文件托管卷。</entry>
     <entry lang="en" key="LINUX_EX2MSG_UNSUPPORTEDSECTORSIZE">错误：驱动器的扇区大小不是512字节。\n\n由于您平台上可用组件的限制，无法在驱动器上创建或使用承载于分区/设备上的卷。\n\n可能的解决方案：\n- 在驱动器上创建容器文件托管卷。\n- 使用具有512字节扇区的驱动器。\n- 在其他平台上使用VeraCrypt。</entry>
-    <entry lang="en" key="LINUX_EX2MSG_VOLUMEHOSTINUSE">The host file/device is already in use.</entry>
-    <entry lang="en" key="LINUX_EX2MSG_VOLUMESLOTUNAVAILABLE">Volume slot unavailable.</entry>
+    <entry lang="en" key="LINUX_EX2MSG_VOLUMEHOSTINUSE">宿主设备/文件正在被使用。</entry>
+    <entry lang="en" key="LINUX_EX2MSG_VOLUMESLOTUNAVAILABLE">卷槽不可用。</entry>
     <entry lang="en" key="LINUX_EX2MSG_HIGHERFUSEVERSIONREQUIRED">VeraCrypt 需要 OSXFUSE 2.5 或更高版本。</entry>
     <entry lang="en" key="EXCEPTION_OCCURRED">出现异常</entry>
     <entry lang="en" key="ENTER_PASSWORD">输入密码</entry>
