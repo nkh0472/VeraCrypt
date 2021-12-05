@@ -385,7 +385,7 @@
     <entry lang="zh-cn" key="MENU_WEBSITE">   主页（联网）(&amp;P)   </entry>
     <entry lang="zh-cn" key="ABOUTBOX">关于(&amp;A)...</entry>
     <entry lang="zh-cn" key="ACCESSMODEFAIL">无法修改旧版本加密卷的只读属性。请检查文件访问权限。</entry>
-    <entry lang="zh-cn" key="ACCESS_DENIED">错误：访问被拒绝。\n\n您试图要访问的分区是长度为 0 的扇区或启动设备。</entry>
+    <entry lang="zh-cn" key="ACCESS_DENIED">错误：访问被拒绝。\n\n您试图要访问的分区是长度为 0 的扇区或是引导设备。</entry>
     <entry lang="zh-cn" key="ADMINISTRATOR">系统管理员</entry>
     <entry lang="zh-cn" key="ADMIN_PRIVILEGES_DRIVER">要加载 VeraCrypt 驱动，您必需以一个具有管理员权限的帐号登陆。</entry>
     <entry lang="zh-cn" key="ADMIN_PRIVILEGES_WARN_DEVICES">请注意：如果要加密或格式化某分区和设备您必需以一个具有管理员权限的帐号登陆。\n\n文件类型加密卷不受这个限制。</entry>
