@@ -4,7 +4,7 @@
  by the TrueCrypt License 3.0.
 
  Modifications and additions to the original source code (contained in this file)
- and all other portions of this file are Copyright (c) 2013-2017 IDRIX
+ and all other portions of this file are Copyright (c) 2013-2025 IDRIX
  and are governed by the Apache License 2.0 the full text of which is
  contained in the file License.txt included in VeraCrypt binary and source
  code distribution packages.
@@ -32,9 +32,10 @@ namespace VeraCrypt
 		ArgAllowScreencapture (false),
 		ArgDisableFileSizeCheck (false),
 		ArgUseLegacyPassword (false),
-#if defined(TC_LINUX ) || defined (TC_FREEBSD)
 		ArgUseDummySudoPassword (false),
-#endif
+#if defined(TC_UNIX)
+		ArgAllowInsecureMount (false),
+ #endif
 		StartBackgroundTask (false)
 	{
 		wxCmdLineParser parser;
@@ -109,6 +110,9 @@ namespace VeraCrypt
 		parser.AddSwitch (L"",	L"legacy-password-maxlength", _("Use legacy maximum password length (64 UTF-8 bytes)"));
 #if defined(TC_LINUX ) || defined (TC_FREEBSD)
 		parser.AddSwitch (L"",	L"use-dummy-sudo-password",	_("Use dummy password in sudo to detect if it is already authenticated"));
+#endif
+#if defined(TC_UNIX)
+		parser.AddSwitch (L"",	L"allow-insecure-mount",	_("Allow mounting volumes on mount points that are in the user's PATH"));
 #endif
 		wxString str;
 		bool param1IsVolume = false;
@@ -378,6 +382,10 @@ namespace VeraCrypt
 		ArgUseLegacyPassword = parser.Found (L"legacy-password-maxlength");		
 #if defined(TC_LINUX ) || defined (TC_FREEBSD)
 		ArgUseDummySudoPassword = parser.Found (L"use-dummy-sudo-password");
+#endif
+
+#if defined(TC_UNIX)
+		ArgAllowInsecureMount = parser.Found (L"allow-insecure-mount");
 #endif
 
 #if !defined(TC_WINDOWS) && !defined(TC_MACOSX)
