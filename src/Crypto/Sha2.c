@@ -306,10 +306,17 @@ extern "C"
 	void sha256_sse4(void *input_data, uint_32t digest[8], uint_64t num_blks);
 	void sha256_rorx(void *input_data, uint_32t digest[8], uint_64t num_blks);
 	void sha256_avx(void *input_data, uint_32t digest[8], uint_64t num_blks);
+#if CRYPTOPP_SHANI_AVAILABLE
+	void sha256_intel(void *input_data, uint_32t digest[8], uint_64t num_blks);
+#endif
 #endif
 
 #if CRYPTOPP_BOOL_X86 || CRYPTOPP_BOOL_X32
 	void VC_CDECL sha256_compress_nayuki(uint_32t state[8], const uint_8t block[64]);
+#endif
+
+#if CRYPTOPP_ARM_SHA2_AVAILABLE
+	void sha256_compress_digest_armv8(const void* input_data, uint_32t digest[8], uint_64t num_blks);
 #endif
 
 #if defined(__cplusplus)
@@ -717,6 +724,13 @@ void StdSha256Transform(sha256_ctx* ctx, void* mp, uint_64t num_blks)
 #ifndef NO_OPTIMIZED_VERSIONS
 
 #if CRYPTOPP_BOOL_X64
+#if CRYPTOPP_SHANI_AVAILABLE
+void IntelSha256Transform(sha256_ctx* ctx, void* mp, uint_64t num_blks)
+{
+	sha256_intel(mp, ctx->hash, num_blks);
+}
+#endif
+
 void Avx2Sha256Transform(sha256_ctx* ctx, void* mp, uint_64t num_blks)
 {
 	if (num_blks > 1)
@@ -744,6 +758,13 @@ void SSE4Sha256Transform(sha256_ctx* ctx, void* mp, uint_64t num_blks)
 void SSE2Sha256Transform(sha256_ctx* ctx, void* mp, uint_64t num_blks)
 {
 	X86_SHA256_HashBlocks(ctx->hash, (const uint_32t*)mp, (size_t)(num_blks * 64));
+}
+#endif
+
+#if CRYPTOPP_ARM_SHA2_AVAILABLE
+void ArmSha256Transform(sha256_ctx* ctx, void* mp, uint_64t num_blks)
+{
+	sha256_compress_digest_armv8(mp, ctx->hash, num_blks);
 }
 #endif
 
@@ -775,6 +796,11 @@ void sha256_begin(sha256_ctx* ctx)
 	{
 #ifndef NO_OPTIMIZED_VERSIONS
 #if CRYPTOPP_BOOL_X64
+#if CRYPTOPP_SHANI_AVAILABLE
+		if (HasSHA256())
+			sha256transfunc = IntelSha256Transform;
+		else
+#endif
 		if (g_isIntel && HasSAVX2() && HasSBMI2())
 			sha256transfunc = Avx2Sha256Transform;
 		else if (g_isIntel && HasSAVX())
@@ -787,6 +813,12 @@ void sha256_begin(sha256_ctx* ctx)
 #if (defined(CRYPTOPP_X86_ASM_AVAILABLE) || defined(CRYPTOPP_X32_ASM_AVAILABLE))
 		if (HasSSE2 ())
 			sha256transfunc = SSE2Sha256Transform;
+		else
+#endif
+
+#if CRYPTOPP_ARM_SHA2_AVAILABLE
+		if (HasSHA256())
+			sha256transfunc = ArmSha256Transform;
 		else
 #endif
 
