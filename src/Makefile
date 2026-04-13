@@ -52,7 +52,7 @@ export LFLAGS :=
 
 export PKG_CONFIG ?= pkg-config
 export PKG_CONFIG_PATH ?= /usr/local/lib/pkgconfig
-export VC_FUSE_PACKAGE := fuse
+
 export VC_OSX_FUSET ?= 0
 
 export WX_CONFIG ?= wx-config
@@ -342,7 +342,6 @@ $(error Specified SDK version was not found, ensure your active developer direct
 
 	ifneq "$(VC_OSX_FUSET)" "0"
 		C_CXX_FLAGS += -DVC_MACOSX_FUSET
-		VC_FUSE_PACKAGE := fuse-t
 	endif
 
 	export CFLAGS_ARM64 := $(CFLAGS) $(C_CXX_FLAGS) -arch arm64 -march=armv8-a+crypto
@@ -546,6 +545,36 @@ ifneq (,$(filter Linux FreeBSD OpenBSD,$(PLATFORM)))
 		C_CXX_FLAGS += $(shell $(PKG_CONFIG) --cflags $(INDICATOR_LIBRARY)) -DHAVE_INDICATORS
 	endif
 endif
+
+#------ FUSE selection ------
+# User must specify WITHFUSE3 (non-zero) to request fuse3. Otherwise fuse (FUSE2) is used.
+# macOS FUSE-T builds select the fuse-t pkg-config package through WITHFUSET.
+# In all cases, existence is validated and build stops if the selected package is not found.
+ifeq "$(PLATFORM)" "MacOSX"
+	ifneq "$(VC_OSX_FUSET)" "0"
+		VC_FUSE_PACKAGE := fuse-t
+	else
+		VC_FUSE_PACKAGE := fuse
+	endif
+else
+	ifeq ($(origin WITHFUSE3),command line)
+		ifneq ($(WITHFUSE3),0)
+			VC_FUSE_PACKAGE := fuse3
+		else
+			VC_FUSE_PACKAGE := fuse
+		endif
+	else
+		VC_FUSE_PACKAGE := fuse
+	endif
+endif
+
+FUSE_FOUND := $(shell $(PKG_CONFIG) --exists $(VC_FUSE_PACKAGE) >/dev/null 2>&1 && echo 1 || echo 0)
+ifeq ($(FUSE_FOUND),0)
+$(error Requested FUSE package '$(VC_FUSE_PACKAGE)' not found. Install it (or set WITHFUSE3/WITHFUSET appropriately).)
+endif
+
+export VC_FUSE_PACKAGE
+export VC_FUSE_VERSION := $(shell $(PKG_CONFIG) --modversion $(VC_FUSE_PACKAGE) 2>/dev/null | cut -d. -f1)
 
 #------ Common configuration ------
 
