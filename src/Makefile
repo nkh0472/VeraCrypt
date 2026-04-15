@@ -582,7 +582,7 @@ CFLAGS := $(C_CXX_FLAGS) $(CFLAGS) $(TC_EXTRA_CFLAGS)
 CXXFLAGS := $(C_CXX_FLAGS) $(CXXFLAGS) $(TC_EXTRA_CXXFLAGS)
 LFLAGS := $(LFLAGS) $(TC_EXTRA_LFLAGS)
 
-WX_CONFIGURE_FLAGS += --enable-unicode -disable-shared --disable-dependency-tracking --enable-exceptions --enable-std_string --enable-dataobj --enable-mimetype
+WX_CONFIGURE_FLAGS += -disable-shared --disable-dependency-tracking --enable-exceptions --enable-dataobj --enable-mimetype
 
 ifdef VC_WX_MINIMAL
 WX_CONFIGURE_FLAGS += --disable-protocol --disable-protocols --disable-url --disable-ipc --disable-sockets --without-libcurl --disable-fs_inet --disable-ole --disable-docview --disable-clipboard \
@@ -660,7 +660,14 @@ endif
 	rm -rf "$(WX_BUILD_DIR)"
 	mkdir -p "$(WX_BUILD_DIR)"
 	@echo Configuring wxWidgets library...
-	cd "$(WX_BUILD_DIR)" && "$(WX_ROOT)/configure" $(WX_CONFIGURE_FLAGS) >/dev/null
+	cd "$(WX_BUILD_DIR)" && \
+	WX_CONFIGURE_LEGACY_FLAGS=""; \
+	for option in unicode std_string; do \
+		if grep -Eq "(^|[^[:alnum:]_])enable_$${option}([^[:alnum:]_]|$$)" "$(WX_ROOT)/configure"; then \
+			WX_CONFIGURE_LEGACY_FLAGS="$$WX_CONFIGURE_LEGACY_FLAGS --enable-$$option"; \
+		fi; \
+	done; \
+	"$(WX_ROOT)/configure" $(WX_CONFIGURE_FLAGS) $$WX_CONFIGURE_LEGACY_FLAGS >/dev/null
 
 	@echo Building wxWidgets library...
 	cd "$(WX_BUILD_DIR)" && $(MAKE) -j 4
