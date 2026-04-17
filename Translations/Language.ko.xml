@@ -644,10 +644,13 @@
     <entry lang="ko" key="PIM_HIDVOL_TITLE">숨겨진 볼륨 PIM</entry>
     <entry lang="ko" key="PIM_HIDDEN_OS_TITLE">숨겨진 운영 체제용 PIM</entry>
     <entry lang="ko" key="PIM_HELP">PIM(Personal Iterations Multiplier)은 헤더 키 파생에 사용되는 반복 횟수를 제어하는 값입니다.\n 반복 = 15000 + (PIM x 1000).\n\n비어 두거나 0으로 설정된 경우 VeraCrypt는 높은 보안을 보장하는 기본값(485)을 사용합니다.\n\n암호가 20자 미만인 경우 PIM은 최소 보안 수준을 유지하기 위해 485자 미만이면 안 됩니다.\n암호가 20자 이상인 경우 PIM을 임의의 값으로 설정할 수 있습니다.\n\nPIM 값이 485보다 크면 마운트 속도가 느려집니다. PIM 값이 작으면(485개 미만) 마운트 속도가 빨라지지만 암호의 강도가 충분하지 않으면 보안을 줄일 수 있습니다.</entry>
+    <entry lang="en" key="PIM_ARGON2_HELP">PIM (Personal Iterations Multiplier) controls the memory and time costs used by Argon2id header key derivation as follows:\n      Memory = min(64 MiB + ((PIM - 1) x 32 MiB), 1024 MiB)\n      Iterations = 3 + ((PIM - 1) / 3) for PIM 31 or lower, then 13 + (PIM - 31)\n\nWhen left empty or set to 0, VeraCrypt will use the default Argon2 PIM (12), which uses 416 MiB of memory and 6 iterations.\n\nWhen the password is less than 20 characters, Argon2 PIM can't be smaller than 12 in order to maintain a minimal security level.\nWhen the password is 20 characters or more, Argon2 PIM can be set to any value.\n\nAn Argon2 PIM larger than 12 increases memory usage up to 1024 MiB and then increases iterations. This will lead to slower mounting. A small Argon2 PIM (less than 12) will lead to quicker mounting but it can reduce security if the password is not strong enough.</entry>
     <entry lang="ko" key="PIM_SYSENC_HELP">PIM(Personal Iterations Multiplier)은 헤더 키 파생에 사용되는 반복 횟수를 제어하는 값입니다.\n 반복 = PIM x 2048\n\n비어 두거나 0으로 설정된 경우 VeraCrypt는 높은 보안을 보장하는 기본값을 사용합니다.\n\n암호가 20자 미만인 경우 PIM은 최소 보안 수준을 유지하기 위해 98자 미만이면 안 됩니다.\n암호가 20자 이상인 경우 PIM을 임의의 값으로 설정할 수 있습니다.\n\nPIM 값이 98보다 크면 부팅 속도가 느려집니다. PIM 값이 작으면 부팅 속도가 빨라지지만 암호가 충분하지 않으면 보안을 줄일 수 있습니다.</entry>
     <entry lang="ko" key="PIM_SYSENC_CHANGE_WARNING">부팅 시스템 번호 기억</entry>
     <entry lang="ko" key="PIM_LARGE_WARNING">VeraCrypt 기본값보다 큰 PIM 값을 선택했습니다.\n이렇게하면 마운트/부팅 속도가 훨씬 느려집니다.</entry>
+    <entry lang="en" key="PIM_ARGON2_LARGE_WARNING">You have chosen an Argon2 PIM value that is larger than VeraCrypt default value.\nPlease note that this can require more memory and lead to much slower mounting.</entry>
     <entry lang="ko" key="PIM_SMALL_WARNING">기본 VeraCrypt 값보다 작은 PIM (Personal Iterations Multiplier)을 선택했습니다. 비밀번호가 충분하지 않으면 보안이 취약해질 수 있습니다.\n\n강력한 비밀번호를 사용하고 있는지 확인 하시겠습니까?</entry>
+    <entry lang="en" key="PIM_ARGON2_SMALL_WARNING">You have chosen an Argon2 PIM value that is smaller than the default VeraCrypt value. Please note that if your password is not strong enough, this could lead to weaker security.\n\nDo you confirm that you are using a strong password?</entry>
     <entry lang="ko" key="PIM_SYSENC_TOO_BIG">시스템 암호화의 개인 반복 곱셈기 (PIM) 최대 값은 65535입니다.</entry>
     <entry lang="ko" key="PIM_TITLE">볼륨 PIM</entry>
     <entry lang="ko" key="HIDDEN_FILES_PRESENT_IN_KEYFILE_PATH">\n\n경고: 숨김 파일이 키 파일 검색 경로에서 발견되었습니다. 이러한 숨김 파일은 키 파일로 사용할 수 없습니다. 키 파일로 사용해야하는 경우 '숨김'속성을 제거하십시오 (각 속성을 마우스 오른쪽 단추로 클릭하고 '속성'을 선택하고 '숨김'을 선택 취소하고 확인을 클릭하십시오). 참고: 숨김 파일은 해당 옵션이 활성화 된 경우에만 표시됩니다(컴퓨터> 구성> '폴더 및 검색 옵션'>보기).</entry>
@@ -1104,6 +1107,7 @@
     <entry lang="ko" key="ALGO_NOT_SUPPORTED_FOR_TRUECRYPT_MODE">이 알고리즘은 TrueCrypt 모드에서는 지원되지 않습니다.</entry>
     <entry lang="ko" key="PIM_NOT_SUPPORTED_FOR_TRUECRYPT_MODE">TrueCrypt 모드에서는 PIM(개인 반복 다중 경로)이 지원되지 않습니다.</entry>
     <entry lang="ko" key="PIM_REQUIRE_LONG_PASSWORD">지정된 PIM을 사용하려면 암호가 20자 이상이어야 합니다.\nSorter 암호는 PIM이 485 이상인 경우에만 사용할 수 있습니다.</entry>
+    <entry lang="en" key="PIM_ARGON2_REQUIRE_LONG_PASSWORD">Password must contain 20 or more characters in order to use the specified Argon2 PIM.\nShorter passwords can only be used if the Argon2 PIM is 12 or greater.</entry>
     <entry lang="ko" key="BOOT_PIM_REQUIRE_LONG_PASSWORD">지정된 PIM을 사용하려면 사전 부트 인증 암호가 20자 이상이어야 합니다.\nSorter 암호는 PIM이 98 이상인 경우에만 사용할 수 있습니다.</entry>
     <entry lang="ko" key="KEYFILES_NOT_SUPPORTED_FOR_SYS_ENCRYPTION">키 파일은 현재 시스템 암호화에 지원되지 않습니다.</entry>
     <entry lang="ko" key="CANNOT_RESTORE_KEYBOARD_LAYOUT">경고: VeraCrypt가 원래 키보드 레이아웃을 복원할 수 없습니다. 이로 인해 암호를 잘못 입력할 수 있습니다.</entry>

@@ -2919,6 +2919,7 @@ BOOL CALLBACK PasswordChangeDlgProc (HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 				&& pwdChangeDlgMode == PCDM_CHANGE_PASSWORD)
 			{
 				int bootPRF = pkcs5;
+				int pimValidationValue = pim;
 				if (bSysEncPwdChangeDlgMode)
 				{
 					try
@@ -2930,7 +2931,17 @@ BOOL CALLBACK PasswordChangeDlgProc (HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 					catch(...)
 					{}
 				}
-				if (!CheckPasswordLength (hwndDlg, GetWindowTextLength(GetDlgItem (hwndDlg, IDC_PASSWORD)), pim, bSysEncPwdChangeDlgMode, bootPRF, FALSE, FALSE))
+				else if (bootPRF == 0)
+				{
+					bootPRF = old_pkcs5;
+					if (bootPRF == 0)
+					{
+						/* Both current and new KDFs are autodetected. ChangePwd() repeats this
+						PIM/password-length validation after opening the header with the detected KDF. */
+						pimValidationValue = 0;
+					}
+				}
+				if (!CheckPasswordLength (hwndDlg, GetWindowTextLength(GetDlgItem (hwndDlg, IDC_PASSWORD)), pimValidationValue, bSysEncPwdChangeDlgMode, bootPRF, FALSE, FALSE))
 					return 1;
 			}
 

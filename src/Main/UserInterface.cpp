@@ -1010,7 +1010,7 @@ const FileManager fileManagers[] = {
 				cmdLine.ArgMountOptions.SharedAccessAllowed = cmdLine.ArgForce;
 				if (cmdLine.ArgHash)
 				{
-					cmdLine.ArgMountOptions.Kdf = Pkcs5Kdf::GetAlgorithm (*cmdLine.ArgHash);
+					cmdLine.ArgMountOptions.Kdf = cmdLine.ArgHash;
 				}
 
 
@@ -1108,8 +1108,8 @@ const FileManager fileManagers[] = {
 
 				if (cmdLine.ArgHash)
 				{
-					options->VolumeHeaderKdf = Pkcs5Kdf::GetAlgorithm (*cmdLine.ArgHash);
-					RandomNumberGenerator::SetHash (cmdLine.ArgHash);
+					options->VolumeHeaderKdf = cmdLine.ArgHash;
+					RandomNumberGenerator::SetHash (cmdLine.ArgHash->GetHash());
 				}
 
 				options->EA = cmdLine.ArgEncryptionAlgorithm;
@@ -1270,9 +1270,9 @@ const FileManager fileManagers[] = {
 					" This option is not available on some platforms.\n"
 					"\n"
 					"--hash=HASH\n"
-					" Use specified hash algorithm when creating a new volume or changing password\n"
-					" and/or keyfiles. This option also specifies the mixing PRF of the random\n"
-					" number generator.\n"
+					" Use specified header key derivation algorithm when creating a new volume\n"
+					" or changing password and/or keyfiles. This option also specifies the\n"
+					" mixing hash of the random number generator.\n"
 					"\n"
 					"-k, --keyfiles=KEYFILE1[,KEYFILE2,KEYFILE3,...]\n"
 					" Use specified keyfiles when mounting a volume or when changing password\n"

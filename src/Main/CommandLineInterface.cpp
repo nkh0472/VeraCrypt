@@ -18,9 +18,30 @@
 #include "CommandLineInterface.h"
 #include "LanguageStrings.h"
 #include "UserInterfaceException.h"
+#include "Volume/Pkcs5Kdf.h"
 
 namespace VeraCrypt
 {
+	static shared_ptr <Pkcs5Kdf> FindKdfAlgorithm (const wxString &name)
+	{
+		foreach (shared_ptr <Pkcs5Kdf> kdf, Pkcs5Kdf::GetAvailableAlgorithms())
+		{
+			wxString kdfName (kdf->GetName());
+			shared_ptr <Hash> hash = kdf->GetHash();
+			wxString hashName (hash->GetName());
+			wxString hashAltName (hash->GetAltName());
+			if (kdfName.IsSameAs (name, false)
+				|| (kdf->IsArgon2() && name.IsSameAs (L"Argon2id", false)))
+				return kdf;
+
+			if (!kdf->IsArgon2()
+				&& (hashName.IsSameAs (name, false) || hashAltName.IsSameAs (name, false)))
+				return kdf;
+		}
+
+		return shared_ptr <Pkcs5Kdf> ();
+	}
+
 	CommandLineInterface::CommandLineInterface (int argc, wchar_t** argv, UserInterfaceType::Enum interfaceType) :
 		ArgCommand (CommandId::None),
 		ArgFilesystem (VolumeCreationOptions::FilesystemType::Unknown),
@@ -67,7 +88,7 @@ namespace VeraCrypt
 #if !defined(TC_WINDOWS) && !defined(TC_MACOSX)
 		parser.AddOption (L"",	L"fs-options",			_("Filesystem mount options"));
 #endif
-		parser.AddOption (L"",	L"hash",				_("Hash algorithm"));
+		parser.AddOption (L"",	L"hash",				_("Header key derivation algorithm"));
 		parser.AddSwitch (L"h", L"help",				_("Display detailed command line help"), wxCMD_LINE_OPTION_HELP);
 		parser.AddSwitch (L"",	L"import-token-keyfiles", _("Import keyfiles to security token"));
 		parser.AddOption (L"k", L"keyfiles",			_("Keyfiles"));
@@ -78,7 +99,7 @@ namespace VeraCrypt
 		parser.AddSwitch (L"",	L"load-preferences",	_("Load user preferences"));
 		parser.AddSwitch (L"",	L"mount",				_("Mount volume interactively"));
 		parser.AddOption (L"m", L"mount-options",		_("VeraCrypt volume mount options"));
-		parser.AddOption (L"",	L"new-hash",			_("New hash algorithm"));
+		parser.AddOption (L"",	L"new-hash",			_("New header key derivation algorithm"));
 		parser.AddOption (L"",	L"new-keyfiles",		_("New keyfiles"));
 		parser.AddOption (L"",	L"new-password",		_("New password"));
 		parser.AddOption (L"",	L"new-pim",				_("New PIM"));
@@ -87,7 +108,7 @@ namespace VeraCrypt
 		parser.AddOption (L"p", L"password",			_("Password"));
 		parser.AddOption (L"",  L"pim",					_("PIM"));
 		parser.AddOption (L"",	L"protect-hidden",		_("Protect hidden volume"));
-		parser.AddOption (L"",	L"protection-hash",		_("Hash algorithm for protected hidden volume"));
+		parser.AddOption (L"",	L"protection-hash",		_("Header key derivation algorithm for protected hidden volume"));
 		parser.AddOption (L"",	L"protection-keyfiles",	_("Keyfiles for protected hidden volume"));
 		parser.AddOption (L"",	L"protection-password",	_("Password for protected hidden volume"));
 		parser.AddOption (L"",	L"protection-pim",		_("PIM for protected hidden volume"));
@@ -396,15 +417,7 @@ namespace VeraCrypt
 
 		if (parser.Found (L"hash", &str))
 		{
-			ArgHash.reset();
-
-			foreach (shared_ptr <Hash> hash, Hash::GetAvailableAlgorithms())
-			{
-				wxString hashName (hash->GetName());
-				wxString hashAltName (hash->GetAltName());
-				if (hashName.IsSameAs (str, false) || hashAltName.IsSameAs (str, false))
-					ArgHash = hash;
-			}
+			ArgHash = FindKdfAlgorithm (str);
 
 			if (!ArgHash)
 				throw_err (LangString["UNKNOWN_OPTION"] + L": " + str);
@@ -412,15 +425,7 @@ namespace VeraCrypt
 
 		if (parser.Found (L"new-hash", &str))
 		{
-			ArgNewHash.reset();
-
-			foreach (shared_ptr <Hash> hash, Hash::GetAvailableAlgorithms())
-			{
-				wxString hashName (hash->GetName());
-				wxString hashAltName (hash->GetAltName());
-				if (hashName.IsSameAs (str, false) || hashAltName.IsSameAs (str, false))
-					ArgNewHash = hash;
-			}
+			ArgNewHash = FindKdfAlgorithm (str);
 
 			if (!ArgNewHash)
 				throw_err (LangString["UNKNOWN_OPTION"] + L": " + str);
@@ -558,19 +563,11 @@ namespace VeraCrypt
 
 		if (parser.Found (L"protection-hash", &str))
 		{
-			bool bHashFound = false;
-			foreach (shared_ptr <Hash> hash, Hash::GetAvailableAlgorithms())
-			{
-				wxString hashName (hash->GetName());
-				wxString hashAltName (hash->GetAltName());
-				if (hashName.IsSameAs (str, false) || hashAltName.IsSameAs (str, false))
-				{
-					bHashFound = true;
-					ArgMountOptions.ProtectionKdf = Pkcs5Kdf::GetAlgorithm (*hash);
-				}
-			}
+			shared_ptr <Pkcs5Kdf> kdf = FindKdfAlgorithm (str);
+			if (kdf)
+				ArgMountOptions.ProtectionKdf = kdf;
 
-			if (!bHashFound)
+			if (!kdf)
 				throw_err (LangString["UNKNOWN_OPTION"] + L": " + str);
 		}
 

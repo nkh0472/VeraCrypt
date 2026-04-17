@@ -87,7 +87,7 @@ namespace VeraCrypt
 		int OuterPim;
 		shared_ptr <Pkcs5Kdf> Kdf;
 		uint32 SectorSize;
-		shared_ptr <Hash> SelectedHash;
+		shared_ptr <Pkcs5Kdf> SelectedKdf;
 		uint64 VolumeSize;
 
 	private:

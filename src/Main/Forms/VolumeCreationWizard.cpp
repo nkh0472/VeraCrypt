@@ -174,7 +174,7 @@ namespace VeraCrypt
 					page->SetPageTitle (LangString["CIPHER_TITLE"]);
 
 				page->SetEncryptionAlgorithm (SelectedEncryptionAlgorithm);
-				page->SetHash (SelectedHash);
+				page->SetPkcs5Kdf (SelectedKdf);
 				return page;
 			}
 
@@ -249,7 +249,7 @@ namespace VeraCrypt
 				else
 					page->SetPageTitle (LangString["PIM_TITLE"]);
 
-				page->SetPageText (LangString["PIM_HELP"]);
+				page->SetPageText (LangString[SelectedKdf ? SelectedKdf->GetPimHelpMessageId() : "PIM_HELP"]);
 				page->SetVolumePim (Pim);
 				return page;
 			}
@@ -708,10 +708,10 @@ namespace VeraCrypt
 			{
 				EncryptionOptionsWizardPage *page = dynamic_cast <EncryptionOptionsWizardPage *> (GetCurrentPage());
 				SelectedEncryptionAlgorithm = page->GetEncryptionAlgorithm ();
-				SelectedHash = page->GetHash ();
+				SelectedKdf = page->GetPkcs5Kdf ();
 
 				if (forward)
-					RandomNumberGenerator::SetHash (SelectedHash);
+					RandomNumberGenerator::SetHash (SelectedKdf->GetHash());
 
 				if (SelectedVolumePath.IsDevice() && (OuterVolume || SelectedVolumeType != VolumeType::Hidden))
 					return Step::VolumePassword;
@@ -870,17 +870,23 @@ namespace VeraCrypt
 
 				if (forward && Password && !Password->IsEmpty())
 				{
-					if (Password->Size() < VolumePassword::WarningSizeThreshold)
+					if (!SelectedKdf)
 					{
-						if (Pim > 0 && Pim < 485)
+						Gui->ShowError ("PARAMETER_INCORRECT");
+						return GetCurrentStep();
+					}
+
+					if (Password->Size() < VolumePassword::SmallPimPasswordSizeThreshold)
+					{
+						if (Pim > 0 && Pim < SelectedKdf->GetDefaultPim())
 						{
-							Gui->ShowError ("PIM_REQUIRE_LONG_PASSWORD");
+							Gui->ShowError (SelectedKdf->GetPimRequireLongPasswordMessageId());
 							return GetCurrentStep();
 						}
 					}
-					else if (Pim > 0 && Pim < 485)
+					else if (Pim > 0 && Pim < SelectedKdf->GetDefaultPim())
 					{
-						if (!Gui->AskYesNo (LangString["PIM_SMALL_WARNING"], false, true))
+						if (!Gui->AskYesNo (LangString[SelectedKdf->GetPimSmallWarningMessageId()], false, true))
 						{
 							return GetCurrentStep();
 						}
@@ -1031,7 +1037,7 @@ namespace VeraCrypt
 						options->Quick = QuickFormatEnabled;
 						options->Size = VolumeSize;
 						options->Type = OuterVolume ? VolumeType::Normal : SelectedVolumeType;
-						options->VolumeHeaderKdf = Pkcs5Kdf::GetAlgorithm (*SelectedHash);
+						options->VolumeHeaderKdf = SelectedKdf;
 						options->EMVSupportEnabled = Gui->GetPreferences().EMVSupportEnabled;
 
 

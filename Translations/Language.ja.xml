@@ -644,10 +644,13 @@
     <entry lang="ja" key="PIM_HIDVOL_TITLE">隠しボリューム PIM</entry>
     <entry lang="ja" key="PIM_HIDDEN_OS_TITLE">隠しオペレーティングシステムの PIM</entry>
     <entry lang="ja" key="PIM_HELP">PIM (Personal Iterations Multiplier) は、ヘッダーキーの導出に使用される反復回数を制御する値です。\n      反復回数 = 15000 + (PIM x 1000)\n\n空欄のままにするか 0 に設定すると、VeraCrypt は高いセキュリティを保証するデフォルト値 (485) を使用します。\n\nパスワードが 20 文字未満の場合、最小限のセキュリティレベルを維持するために PIM を 485 未満にすることはできません。\nパスワードが 20 文字以上の場合、PIM は任意の値に設定できます。\n\n485 より大きい PIM 値はマウントを遅くします。小さい PIM 値 (485 未満) はマウントを速くしますが、パスワードが十分に強力でない場合、セキュリティが低下する可能性があります。</entry>
+    <entry lang="en" key="PIM_ARGON2_HELP">PIM (Personal Iterations Multiplier) controls the memory and time costs used by Argon2id header key derivation as follows:\n      Memory = min(64 MiB + ((PIM - 1) x 32 MiB), 1024 MiB)\n      Iterations = 3 + ((PIM - 1) / 3) for PIM 31 or lower, then 13 + (PIM - 31)\n\nWhen left empty or set to 0, VeraCrypt will use the default Argon2 PIM (12), which uses 416 MiB of memory and 6 iterations.\n\nWhen the password is less than 20 characters, Argon2 PIM can't be smaller than 12 in order to maintain a minimal security level.\nWhen the password is 20 characters or more, Argon2 PIM can be set to any value.\n\nAn Argon2 PIM larger than 12 increases memory usage up to 1024 MiB and then increases iterations. This will lead to slower mounting. A small Argon2 PIM (less than 12) will lead to quicker mounting but it can reduce security if the password is not strong enough.</entry>
     <entry lang="ja" key="PIM_SYSENC_HELP">PIM (Personal Iterations Multiplier) は、ヘッダーキーの導出に使用される反復回数を制御する値です。\n      反復回数 = PIM x 2048\n\n空欄のままにするか 0 に設定すると、VeraCrypt は高いセキュリティを保証するデフォルト値を使用します。\n\nパスワードが 20 文字未満の場合、最小限のセキュリティレベルを維持するために PIM を 98 未満にすることはできません。\nパスワードが 20 文字以上の場合、PIM は任意の値に設定できます。\n\n98 より大きい PIM 値は起動を遅くします。小さい PIM 値 (98 未満) は起動を速くしますが、パスワードが十分に強力でない場合、セキュリティが低下する可能性があります。</entry>
     <entry lang="ja" key="PIM_SYSENC_CHANGE_WARNING">システムを起動するための数値を忘れないでください</entry>
     <entry lang="ja" key="PIM_LARGE_WARNING">VeraCrypt のデフォルト値よりも大きい PIM 値を選択しました。\nこれにより、マウント/起動が大幅に遅くなることに注意してください。</entry>
+    <entry lang="en" key="PIM_ARGON2_LARGE_WARNING">You have chosen an Argon2 PIM value that is larger than VeraCrypt default value.\nPlease note that this can require more memory and lead to much slower mounting.</entry>
     <entry lang="ja" key="PIM_SMALL_WARNING">VeraCrypt のデフォルト値よりも小さい PIM (Personal Iterations Multiplier) を選択しました。パスワードが十分に強力でない場合、セキュリティが低下する可能性があります。\n\n強力なパスワードを使用していることを確認しますか？</entry>
+    <entry lang="en" key="PIM_ARGON2_SMALL_WARNING">You have chosen an Argon2 PIM value that is smaller than the default VeraCrypt value. Please note that if your password is not strong enough, this could lead to weaker security.\n\nDo you confirm that you are using a strong password?</entry>
     <entry lang="ja" key="PIM_SYSENC_TOO_BIG">システム暗号化の PIM (Personal Iterations Multiplier) の最大値は 65535 です。</entry>
     <entry lang="ja" key="PIM_TITLE">ボリューム PIM</entry>
     <entry lang="ja" key="HIDDEN_FILES_PRESENT_IN_KEYFILE_PATH">\n\n警告：指定フォルダのキーファイル探索中に隠しファイルが見つかりました。このような隠しファイルはキーファイルとして使用されません。キーファイルとして使用したい場合は隠し属性を解除してください（該当ファイルを右クリックしてプロパティを開き、隠しファイルのチェックを外して「OK」をクリックします）。注：隠しファイルはフォルダオプションですべてのファイルを表示する設定になっていないと表示されません。</entry>
@@ -1104,6 +1107,7 @@
     <entry lang="ja" key="ALGO_NOT_SUPPORTED_FOR_TRUECRYPT_MODE">このアルゴリズムはTrueCryptモードではサポートされていません。</entry>
     <entry lang="ja" key="PIM_NOT_SUPPORTED_FOR_TRUECRYPT_MODE">PIM（Personal Iterations Multiplier）はTrueCryptモードではサポートされていません。</entry>
     <entry lang="ja" key="PIM_REQUIRE_LONG_PASSWORD">指定されたPIMを使用するには、パスワードは20文字以上でなければなりません。\n短いパスワードは、PIMが485以上の場合にのみ使用できます。</entry>
+    <entry lang="en" key="PIM_ARGON2_REQUIRE_LONG_PASSWORD">Password must contain 20 or more characters in order to use the specified Argon2 PIM.\nShorter passwords can only be used if the Argon2 PIM is 12 or greater.</entry>
     <entry lang="ja" key="BOOT_PIM_REQUIRE_LONG_PASSWORD">起動前認証パスワードは、指定されたPIMを使用するためには20文字以上である必要があります。\n短いパスワードは、PIMが98以上の場合にのみ使用できます。</entry>
     <entry lang="ja" key="KEYFILES_NOT_SUPPORTED_FOR_SYS_ENCRYPTION">現在、システムの暗号化でのキーファイル使用には対応していません。</entry>
     <entry lang="ja" key="CANNOT_RESTORE_KEYBOARD_LAYOUT">警告：VeraCryptは元のキーボードレイアウトを復元できませんでした。そのためパスワードを正確に入力できないおそれがあります。</entry>
