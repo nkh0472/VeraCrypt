@@ -1254,8 +1254,10 @@ wchar_t *get_kdf_name (int kdf_id)
 	case STREEBOG:
 		return L"STREEBOG-PBKDF2";
 
+#ifndef VC_DCS_DISABLE_ARGON2
 	case ARGON2:
 		return L"Argon2";
+#endif
 
 	default:		
 		return L"(Unknown)";
@@ -1302,9 +1304,11 @@ int get_pkcs5_iteration_count(int pkcs5_prf_id, int pim, BOOL bBoot, int* pMemor
 				iteration_count = bBoot ? pim * 2048 : 15000 + pim * 1000;
 			break;
 
+#ifndef VC_DCS_DISABLE_ARGON2
 		case ARGON2:
 			get_argon2_params (pim, &iteration_count, pMemoryCost);
 			break;
+#endif
 
 		default:
 			TC_THROW_FATAL_EXCEPTION; // Unknown/wrong ID
@@ -1323,13 +1327,16 @@ int is_pkcs5_prf_supported (int pkcs5_prf_id, PRF_BOOT_TYPE bootType)
 		|| (bootType != PRF_BOOT_MBR && (pkcs5_prf_id < FIRST_PRF_ID || pkcs5_prf_id > LAST_PRF_ID))
 		)
       return 0;
+#ifndef VC_DCS_DISABLE_ARGON2
    // we don't support Argon2 in pre-boot authentication
    if ((bootType == PRF_BOOT_MBR || bootType == PRF_BOOT_GPT) && pkcs5_prf_id == ARGON2)
       return 0;	
+#endif
    return 1;
 
 }
 
+#ifndef VC_DCS_DISABLE_ARGON2
 void derive_key_argon2(const unsigned char *pwd, int pwd_len, const unsigned char *salt, int salt_len, uint32 iterations, uint32 memcost, unsigned char *dk, int dklen, volatile long *pAbortKeyDerivation)
 {
 #if defined (DEVICE_DRIVER) && !defined(_M_ARM64)
@@ -1438,5 +1445,6 @@ void get_argon2_params(int pim, int* pIterations, int* pMemcost)
         *pIterations = 13 + (pim - 31);
     }
 }
+#endif
 
 #endif //!TC_WINDOWS_BOOT

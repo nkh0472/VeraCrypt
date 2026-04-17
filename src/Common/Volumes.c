@@ -183,6 +183,9 @@ int ReadVolumeHeader (BOOL bBoot, unsigned char *encryptedHeader, Password *pass
 	int status = ERR_PARAMETER_INCORRECT;
 	int primaryKeyOffset;
 	int pkcs5PrfCount = LAST_PRF_ID - FIRST_PRF_ID + 1;
+	int iterationsCount = 0;
+	int memoryCost = 0;
+	LONG volatile abortKeyDerivation = 0;
 #if !defined(_UEFI)
 	TC_EVENT *keyDerivationCompletedEvent = NULL;
 	TC_EVENT *noOutstandingWorkItemEvent = NULL;
@@ -192,9 +195,6 @@ int ReadVolumeHeader (BOOL bBoot, unsigned char *encryptedHeader, Password *pass
 	size_t encryptionThreadCount = GetEncryptionThreadCount();
 	LONG *outstandingWorkItemCount = NULL;
 	int i;
-	int iterationsCount = 0;
-	int memoryCost = 0;
-	LONG volatile abortKeyDerivation = 0;
 #endif
 	size_t queuedWorkItems = 0;
 
@@ -310,9 +310,11 @@ int ReadVolumeHeader (BOOL bBoot, unsigned char *encryptedHeader, Password *pass
 		if (selected_pkcs5_prf != 0 && enqPkcs5Prf != selected_pkcs5_prf)
 			continue;
 
+#ifndef VC_DCS_DISABLE_ARGON2
 		// we don't support Argon2 in pre-boot authentication
 		if (bBoot && (enqPkcs5Prf == ARGON2))
 			continue;
+#endif
 
 #if !defined(_UEFI)
 		if ((selected_pkcs5_prf == 0) && (encryptionThreadCount > 1))
@@ -409,10 +411,12 @@ KeyReady:	;
 				break;
 
 
+#ifndef VC_DCS_DISABLE_ARGON2
 			case ARGON2:
 				derive_key_argon2(keyInfo->userKey, keyInfo->keyLength, keyInfo->salt,
 					PKCS5_SALT_SIZE, keyInfo->noIterations, keyInfo->memoryCost, dk, GetMaxPkcs5OutSize(), &abortKeyDerivation);
 				break;
+#endif
 #endif	
                         default:
 				// Unknown/wrong ID
@@ -617,11 +621,13 @@ KeyReady:	;
 
 				status = ERR_SUCCESS;
 
+#if !defined(_UEFI)
 				if ((selected_pkcs5_prf == 0) && (encryptionThreadCount > 1))
 				{
 					// Signal other threads to stop
 					InterlockedExchange(&abortKeyDerivation, 1);
 				}
+#endif
 				goto ret;
 			}
 		}
@@ -629,8 +635,10 @@ KeyReady:	;
 	status = ERR_PASSWORD_WRONG;
 
 err:
+#if !defined(_UEFI)
 	// Signal threads to stop
 	InterlockedExchange(&abortKeyDerivation, 1);
+#endif
 	if (cryptoInfo != retHeaderCryptoInfo)
 	{
 		crypto_close(cryptoInfo);
@@ -672,7 +680,7 @@ ret:
 #endif
 
 	burn (keyInfo, sizeof (KEY_INFO));
-#if !defined(DEVICE_DRIVER)
+#if !defined(DEVICE_DRIVER) && !defined(_UEFI)
 	VirtualUnlock (keyInfoBuffer, keyInfoBufferSize);
 #endif
 	TCfree(keyInfoBuffer);
@@ -942,12 +950,14 @@ int CreateVolumeHeaderInMemory (HWND hwndDlg, BOOL bBoot, unsigned char *header,
 	if (pim < 0)
 		pim = 0;
 
+#ifndef VC_DCS_DISABLE_ARGON2
 	// we don't support Argon2 in pre-boot authentication
 	if (bBoot && (pkcs5_prf == ARGON2))
 	{
 		crypto_close (cryptoInfo);
 		return ERR_PARAMETER_INCORRECT;
 	}
+#endif
 
 	memset (header, 0, TC_VOLUME_HEADER_EFFECTIVE_SIZE);
 #if !defined(_UEFI)
@@ -1065,10 +1075,12 @@ int CreateVolumeHeaderInMemory (HWND hwndDlg, BOOL bBoot, unsigned char *header,
 				PKCS5_SALT_SIZE, keyInfo.noIterations, dk, GetMaxPkcs5OutSize(), NULL);
 			break;
 
+#ifndef VC_DCS_DISABLE_ARGON2
 		case ARGON2:
 			derive_key_argon2(keyInfo.userKey, keyInfo.keyLength, keyInfo.salt,
 				PKCS5_SALT_SIZE, keyInfo.noIterations, keyInfo.memoryCost, dk, GetMaxPkcs5OutSize(), NULL);
 			break;
+#endif
         #endif
 		default:
 			// Unknown/wrong ID

@@ -133,7 +133,9 @@ static Hash Hashes[] =
         { BLAKE2S,		L"BLAKE2s-256",				FALSE,	TRUE },
         { WHIRLPOOL,	L"Whirlpool",			FALSE,	FALSE },
 	{ STREEBOG,		L"Streebog",	FALSE,	FALSE },
+#ifndef VC_DCS_DISABLE_ARGON2
 	{ ARGON2,		L"BLAKE2b-512",	FALSE,	FALSE },
+#endif
     #endif
         { 0, 0, 0 }
 };

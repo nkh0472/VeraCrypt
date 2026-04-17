@@ -55,7 +55,9 @@ enum
 	SHA256,
 	BLAKE2S,
 	STREEBOG,
+#ifndef VC_DCS_DISABLE_ARGON2
 	ARGON2,
+#endif
 	HASH_ENUM_END_ID
 };
 
@@ -204,8 +206,10 @@ typedef struct
 #ifndef TC_WINDOWS_BOOT
 #	include "Sha2.h"
 #	include "Whirlpool.h"
+#ifndef VC_DCS_DISABLE_ARGON2
 #	include "argon2.h"
 #	include "Crypto/Argon2/src/blake2/blake2b.h"
+#endif
 #	include "Streebog.h"
 #	include "kuznyechik.h"
 #	include "Camellia.h"
