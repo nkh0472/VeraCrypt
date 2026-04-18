@@ -189,6 +189,43 @@ static DWORD				LastKnownLogicalDrives;
 static volatile LONG FavoriteMountOnGoing = 0;
 
 
+static mountFavoriteVolumeThreadParam* AllocateMountFavoriteVolumeThreadParam (BOOL systemFavorites, BOOL logOnMount, BOOL hotKeyMount, const FavoriteVolume* favoriteVolumeToMount)
+{
+	mountFavoriteVolumeThreadParam* pParam = (mountFavoriteVolumeThreadParam*) calloc (1, sizeof (mountFavoriteVolumeThreadParam));
+	if (!pParam)
+		return NULL;
+
+	pParam->systemFavorites = systemFavorites;
+	pParam->logOnMount = logOnMount;
+	pParam->hotKeyMount = hotKeyMount;
+
+	if (favoriteVolumeToMount)
+	{
+		try
+		{
+			pParam->favoriteVolumeToMount = new FavoriteVolume (*favoriteVolumeToMount);
+		}
+		catch (...)
+		{
+			free (pParam);
+			return NULL;
+		}
+	}
+
+	return pParam;
+}
+
+
+static void FreeMountFavoriteVolumeThreadParam (mountFavoriteVolumeThreadParam* pParam)
+{
+	if (pParam)
+	{
+		delete pParam->favoriteVolumeToMount;
+		free (pParam);
+	}
+}
+
+
 const wchar_t* MainInitMutexName = L"Local\\VeraCryptMainInit_02B831C5_401D_4A0D_8CC5_98D2C4CEB5F2";
 static HANDLE MainInitMutex = NULL;		/* Mutex for main dialog WM_INITDIALOG */
 static BOOL MainInitMutexAcquired = FALSE;	/* TRUE if the main window mutex has been acquired */
@@ -5847,7 +5884,7 @@ static BOOL MountAllDevicesThreadCode (HWND hwndDlg, BOOL bPasswordPrompt)
 
 		if (devices.empty())
 			devices = GetAvailableHostDevices (true, false, true, true);
-		foreach (const HostDevice &drive, devices)
+		for (const HostDevice& drive: devices)
 		{
 			vector <HostDevice> partitions = drive.Partitions;
 			partitions.insert (partitions.begin(), drive);
@@ -7852,8 +7889,9 @@ BOOL CALLBACK MainDialogProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 							break;
 
 						reentry = true;
+						finally_do_arg (bool*, &reentry, { *finally_arg = false; });
 
-						for (FavoriteVolume favorite: FavoritesOnArrivalMountRequired)
+						for (FavoriteVolume& favorite: FavoritesOnArrivalMountRequired)
 						{
 							if (favorite.UseVolumeID)
 							{
@@ -7903,7 +7941,7 @@ BOOL CALLBACK MainDialogProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 								continue;
 
 							bool mountedAndNotDisconnected = false;
-							for (FavoriteVolume mountedFavorite: FavoritesMountedOnArrivalStillConnected)
+							for (const FavoriteVolume& mountedFavorite: FavoritesMountedOnArrivalStillConnected)
 							{
 								if (favorite.Path == mountedFavorite.Path)
 								{
@@ -7914,39 +7952,46 @@ BOOL CALLBACK MainDialogProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 
 							if (!mountedAndNotDisconnected)
 							{
-								FavoriteMountOnArrivalInProgress = TRUE;
-								MountFavoriteVolumes (hwndDlg, FALSE, FALSE, FALSE, favorite);
-								FavoriteMountOnArrivalInProgress = FALSE;
+								BOOL mounted = FALSE;
+								{
+									FavoriteMountOnArrivalInProgress = TRUE;
+									finally_do ({ FavoriteMountOnArrivalInProgress = FALSE; });
+									mounted = MountFavoriteVolumes (hwndDlg, FALSE, FALSE, FALSE, favorite);
+								}
 
-								FavoritesMountedOnArrivalStillConnected.push_back (favorite);
+								if (mounted)
+									FavoritesMountedOnArrivalStillConnected.push_back (favorite);
 							}
 						}
 
-						bool deleted;
 						for (list <FavoriteVolume>::iterator favorite = FavoritesMountedOnArrivalStillConnected.begin();
-							favorite != FavoritesMountedOnArrivalStillConnected.end();
-							deleted ? favorite : ++favorite)
+							favorite != FavoritesMountedOnArrivalStillConnected.end();)
 						{
-							deleted = false;
-
 							if (IsMountedVolume (favorite->Path.c_str()))
+							{
+								++favorite;
 								continue;
+							}
 
 							if (!IsVolumeDeviceHosted (favorite->Path.c_str()))
 							{
 								if (FileExists (favorite->Path.c_str()))
+								{
+									++favorite;
 									continue;
+								}
 							}
 
 							wchar_t volDevPath[TC_MAX_PATH];
 							if (favorite->VolumePathId.size() > 5
 								&& QueryDosDevice (favorite->VolumePathId.substr (4, favorite->VolumePathId.size() - 5).c_str(), volDevPath, TC_MAX_PATH) != 0)
 							{
+								++favorite;
 								continue;
 							}
 
 							// set DisconnectedDevice field on FavoritesOnArrivalMountRequired element
-							foreach (FavoriteVolume onArrivalFavorite, FavoritesOnArrivalMountRequired)
+							for (FavoriteVolume& onArrivalFavorite: FavoritesOnArrivalMountRequired)
 							{
 								if (onArrivalFavorite.Path == favorite->Path)
 								{
@@ -7956,10 +8001,7 @@ BOOL CALLBACK MainDialogProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 							}
 
 							favorite = FavoritesMountedOnArrivalStillConnected.erase (favorite);
-							deleted = true;
 						}
-
-						reentry = false;
 					}
 				}
 
@@ -9109,7 +9151,10 @@ BOOL CALLBACK MainDialogProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 		if (lw == IDM_MOUNT_FAVORITE_VOLUMES)
 		{
 			if (0 == _InterlockedCompareExchange(&FavoriteMountOnGoing, 1, 0))
-				_beginthread(mountFavoriteVolumeThreadFunction, 0, NULL);
+			{
+				if (_beginthread(mountFavoriteVolumeThreadFunction, 0, NULL) == (uintptr_t) -1L)
+					_InterlockedExchange(&FavoriteMountOnGoing, 0);
+			}
 			return 1;
 		}
 
@@ -9192,13 +9237,13 @@ BOOL CALLBACK MainDialogProc (HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lPa
 				{
 					if (0 == _InterlockedCompareExchange(&FavoriteMountOnGoing, 1, 0))
 					{
-						mountFavoriteVolumeThreadParam* pParam = (mountFavoriteVolumeThreadParam*) calloc(1, sizeof(mountFavoriteVolumeThreadParam));
-						pParam->systemFavorites = FALSE;
-						pParam->logOnMount = FALSE;
-						pParam->hotKeyMount = FALSE;
-						pParam->favoriteVolumeToMount = &FavoriteVolumes[favoriteIndex];
+						mountFavoriteVolumeThreadParam* pParam = AllocateMountFavoriteVolumeThreadParam (FALSE, FALSE, FALSE, &FavoriteVolumes[favoriteIndex]);
 
-						_beginthread(mountFavoriteVolumeThreadFunction, 0, pParam);
+						if (!pParam || _beginthread(mountFavoriteVolumeThreadFunction, 0, pParam) == (uintptr_t) -1L)
+						{
+							FreeMountFavoriteVolumeThreadParam (pParam);
+							_InterlockedExchange(&FavoriteMountOnGoing, 0);
+						}
 					}
 				}
 			}
@@ -10854,7 +10899,7 @@ BOOL MountFavoriteVolumes (HWND hwnd, BOOL systemFavorites, BOOL logOnMount, BOO
 	else
 		favorites = FavoriteVolumes;
 
-	foreach (const FavoriteVolume &favorite, favorites)
+	for (const FavoriteVolume& favorite: favorites)
 	{
 		if (ServiceMode && systemFavorites && favorite.DisconnectedDevice)
 		{
@@ -10955,12 +11000,12 @@ void CALLBACK mountFavoriteVolumeCallbackFunction (void *pArg, HWND hwnd)
 
 	if (pParam)
 	{
+		finally_do_arg (mountFavoriteVolumeThreadParam*, pParam, { FreeMountFavoriteVolumeThreadParam (finally_arg); });
+
 		if (pParam->favoriteVolumeToMount)
 			MountFavoriteVolumes (hwnd, pParam->systemFavorites, pParam->logOnMount, pParam->hotKeyMount, *(pParam->favoriteVolumeToMount));
 		else
 			MountFavoriteVolumes (hwnd, pParam->systemFavorites, pParam->logOnMount, pParam->hotKeyMount);
-
-		free (pParam);
 	}
 	else
 		MountFavoriteVolumes (hwnd);
@@ -10969,8 +11014,8 @@ void CALLBACK mountFavoriteVolumeCallbackFunction (void *pArg, HWND hwnd)
 void __cdecl mountFavoriteVolumeThreadFunction (void *pArg)
 {
 	ScreenCaptureBlocker screenCaptureBlocker;
+	finally_do ({ _InterlockedExchange(&FavoriteMountOnGoing, 0); });
 	ShowWaitDialog (MainDlg, FALSE, mountFavoriteVolumeCallbackFunction, pArg);
-	_InterlockedExchange(&FavoriteMountOnGoing, 0);
 }
 
 static void SaveDefaultKeyFilesParam (HWND hwnd)
@@ -11107,13 +11152,13 @@ static void HandleHotKey (HWND hwndDlg, WPARAM wParam)
 		{
 			if (0 == _InterlockedCompareExchange(&FavoriteMountOnGoing, 1, 0))
 			{
-				mountFavoriteVolumeThreadParam* pParam = (mountFavoriteVolumeThreadParam*) calloc(1, sizeof(mountFavoriteVolumeThreadParam));
-				pParam->systemFavorites = FALSE;
-				pParam->logOnMount = FALSE;
-				pParam->hotKeyMount = TRUE;
-				pParam->favoriteVolumeToMount = NULL;
+				mountFavoriteVolumeThreadParam* pParam = AllocateMountFavoriteVolumeThreadParam (FALSE, FALSE, TRUE, NULL);
 
-				_beginthread(mountFavoriteVolumeThreadFunction, 0, pParam);
+				if (!pParam || _beginthread(mountFavoriteVolumeThreadFunction, 0, pParam) == (uintptr_t) -1L)
+				{
+					FreeMountFavoriteVolumeThreadParam (pParam);
+					_InterlockedExchange(&FavoriteMountOnGoing, 0);
+				}
 			}
 		}
 		break;

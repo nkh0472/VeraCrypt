@@ -121,6 +121,7 @@ typedef struct
 	BOOL systemFavorites;
 	BOOL logOnMount;
 	BOOL hotKeyMount;
+	/* Owned by the thread parameter when non-NULL. */
 	VeraCrypt::FavoriteVolume* favoriteVolumeToMount;
 } mountFavoriteVolumeThreadParam;
 

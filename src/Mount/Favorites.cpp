@@ -290,7 +290,7 @@ namespace VeraCrypt
 						{
 							bMountFavoritesOnLogon = FALSE;
 
-							foreach (const FavoriteVolume &favorite, Favorites)
+							for (const FavoriteVolume& favorite: Favorites)
 							{
 								if (favorite.MountOnLogOn)
 								{
@@ -301,7 +301,7 @@ namespace VeraCrypt
 
 							if (!bEnableBkgTask || bCloseBkgTaskWhenNoVolumes || IsNonInstallMode())
 							{
-								foreach (const FavoriteVolume favorite, Favorites)
+								for (const FavoriteVolume& favorite: Favorites)
 								{
 									if (favorite.MountOnArrival)
 									{
@@ -482,7 +482,7 @@ namespace VeraCrypt
 		AppendMenu (FavoriteVolumesMenu, MF_SEPARATOR, 0, L"");
 
 		int i = 0;
-		foreach (const FavoriteVolume &favorite, FavoriteVolumes)
+		for (const FavoriteVolume& favorite: FavoriteVolumes)
 		{
 			UINT flags = MF_STRING;
 
@@ -512,7 +512,7 @@ namespace VeraCrypt
 		SendMessage (favoriteListControl, LVM_DELETEALLITEMS, 0, 0);
 
 		int line = 0;
-		foreach (const FavoriteVolume favorite, favorites)
+		for (const FavoriteVolume& favorite: favorites)
 		{
 			ListItemAdd (favoriteListControl, line, (wchar_t *) favorite.MountPoint.substr (0, 2).c_str());
 			FillListControlSubItems (favoriteListControl, line++, favorite);
@@ -533,7 +533,7 @@ namespace VeraCrypt
 
 	wstring GetFavoriteVolumeLabel (const wstring &volumePath, bool& useInExplorer)
 	{
-		foreach (const FavoriteVolume &favorite, FavoriteVolumes)
+		for (const FavoriteVolume& favorite: FavoriteVolumes)
 		{
 			if (favorite.Path == volumePath)
 			{
@@ -542,7 +542,7 @@ namespace VeraCrypt
 			}
 		}
 
-		foreach (const FavoriteVolume &favorite, SystemFavoriteVolumes)
+		for (const FavoriteVolume& favorite: SystemFavoriteVolumes)
 		{
 			if (favorite.Path == volumePath)
 			{
@@ -735,7 +735,7 @@ namespace VeraCrypt
 
 		FavoritesOnArrivalMountRequired.clear();
 
-		for (const FavoriteVolume favorite: FavoriteVolumes)
+		for (const FavoriteVolume& favorite: FavoriteVolumes)
 		{
 			if (favorite.MountOnArrival)
 			{
@@ -745,7 +745,7 @@ namespace VeraCrypt
 				{
 					bool present = false;
 
-					for (const FavoriteVolume favoriteConnected: FavoritesMountedOnArrivalStillConnected)
+					for (const FavoriteVolume& favoriteConnected: FavoritesMountedOnArrivalStillConnected)
 					{
 						if (favorite.Path == favoriteConnected.Path)
 						{
@@ -795,7 +795,7 @@ namespace VeraCrypt
 		XmlWriteHeader (f);
 		fputws (L"\n\t<favorites>", f);
 
-		foreach (const FavoriteVolume &favorite, favorites)
+		for (const FavoriteVolume& favorite: favorites)
 		{
 			wchar_t tq[2048];
 
