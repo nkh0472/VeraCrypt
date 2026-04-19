@@ -2230,6 +2230,23 @@ static void PasswordChangeEnable (HWND hwndDlg, int button, int passwordId, BOOL
 	EnableWindow (GetDlgItem (hwndDlg, button), bEnable);
 }
 
+static BOOL CheckKdfOnlyPimForPassword (HWND hwndDlg, const Password *password, int pim, int old_pkcs5, int pkcs5)
+{
+	int pimValidationPkcs5 = pkcs5;
+
+	if (!password || password->Length == 0 || pim <= 0)
+		return TRUE;
+
+	if (pimValidationPkcs5 == 0)
+	{
+		pimValidationPkcs5 = old_pkcs5;
+		if (pimValidationPkcs5 == 0)
+			return TRUE;
+	}
+
+	return CheckPasswordLength (hwndDlg, password->Length, pim, FALSE, pimValidationPkcs5, TRUE, FALSE);
+}
+
 // implementation for support of change password operation in wait dialog mechanism
 
 typedef struct
@@ -2941,6 +2958,17 @@ BOOL CALLBACK PasswordChangeDlgProc (HWND hwndDlg, UINT msg, WPARAM wParam, LPAR
 					newPassword.Length = (unsigned __int32) strlen ((char *) newPassword.Text);
 				else
 					return 1;
+			}
+
+			if (!bSysEncPwdChangeDlgMode
+				&& pwdChangeDlgMode == PCDM_CHANGE_PKCS5_PRF
+				&& !CheckKdfOnlyPimForPassword (hwndDlg, &newPassword, pim, old_pkcs5, pkcs5))
+			{
+				burn (&oldPassword, sizeof (oldPassword));
+				burn (&newPassword, sizeof (newPassword));
+				burn (&old_pim, sizeof (old_pim));
+				burn (&pim, sizeof (pim));
+				return 1;
 			}
 
 			WaitCursor ();
