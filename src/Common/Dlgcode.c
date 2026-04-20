@@ -5729,6 +5729,11 @@ void handleError (HWND hwndDlg, int code, const char* srcPos)
 	case ERR_CIPHER_INIT_WEAK_KEY:
 		MessageBoxW (hwndDlg, AppendSrcPos (GetString ("ERR_CIPHER_INIT_WEAK_KEY"), srcPos).c_str(), lpszTitle, ICON_HAND);
 		break;
+
+	case ERR_KEY_DERIVATION_FAILED:
+		MessageBoxW (hwndDlg, AppendSrcPos (GetString ("ERR_KEY_DERIVATION_FAILED"), srcPos).c_str(), lpszTitle, ICON_HAND);
+		break;
+
 	case ERR_VOL_ALREADY_MOUNTED:
 		MessageBoxW (hwndDlg, AppendSrcPos (GetString ("VOL_ALREADY_MOUNTED"), srcPos).c_str(), lpszTitle, ICON_HAND);
 		break;
@@ -6512,7 +6517,8 @@ static BOOL PerformBenchmark(HWND hBenchDlg, HWND hwndDlg)
 				
 				case ARGON2:
 					/* test with ARGON2 used as the PRF */
-					derive_key_argon2 ((const unsigned char*) "passphrase-1234567890", 21, (const unsigned char*)tmp_salt, 64, iterations, memoryCost, dk, MASTER_KEYDATA_SIZE, NULL);
+					if (derive_key_argon2 ((const unsigned char*) "passphrase-1234567890", 21, (const unsigned char*)tmp_salt, 64, iterations, memoryCost, dk, MASTER_KEYDATA_SIZE, NULL) != 0)
+						goto key_derivation_error;
  					break;
 				}
 	                   #endif	
@@ -6638,6 +6644,26 @@ static BOOL PerformBenchmark(HWND hBenchDlg, HWND hwndDlg)
 
 	NormalCursor ();
 	return TRUE;
+
+key_derivation_error:
+
+	if (ci)
+		crypto_close (ci);
+
+	if (lpTestBuffer)
+	{
+		VirtualUnlock (lpTestBuffer, benchmarkBufferSize - (benchmarkBufferSize % 16));
+
+		_aligned_free(lpTestBuffer);
+	}
+
+	NormalCursor ();
+
+	EnableWindow (GetDlgItem (hBenchDlg, IDC_PERFORM_BENCHMARK), TRUE);
+	EnableWindow (GetDlgItem (hBenchDlg, IDCLOSE), TRUE);
+
+	MessageBoxW (hwndDlg, GetString ("ERR_KEY_DERIVATION_FAILED"), lpszTitle, ICON_HAND);
+	return FALSE;
 
 counter_error:
 	

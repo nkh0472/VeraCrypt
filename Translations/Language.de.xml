@@ -1660,6 +1660,7 @@
     <entry lang="de" key="IDD_PREFERENCES_TAB_PASSWORD">Passwort</entry>
     <entry lang="de" key="IDC_SECURE_DESKTOP_ENABLE_IME">Eingabemethoden-Editor (IME) im Secure Desktop verwenden</entry>
     <entry lang="de" key="ENABLE_IME_IN_SECURE_DESKTOP_WARNING">WARNUNG: Verwenden Sie diese Option nur, wenn Probleme bei der Auswahl von Schlüsseldateien/Tokens unter dem Secure Desktop auftreten.</entry>
+    <entry lang="en" key="ERR_KEY_DERIVATION_FAILED">Key derivation failed. This may be caused by insufficient memory or an interrupted operation.</entry>
   </localization>
   <!-- XML-Schema -->
   <xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
