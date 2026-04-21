@@ -10089,10 +10089,40 @@ static void SystemFavoritesServiceSetStatus (DWORD status, DWORD waitHint = 0)
 	SetServiceStatus (SystemFavoritesServiceStatusHandle, &SystemFavoritesServiceStatus);
 }
 
+struct SystemFavoritesServiceBootLoaderUpdateOptions
+{
+	bool PostOOBE;
+	bool SetBootEntry;
+	bool ForceFirstBootEntry;
+	bool ForceSetNextBoot;
+};
+
+static BOOL GetSystemFavoritesServiceBootLoaderUpdateOptions (uint32 serviceFlags, BOOL bForce, SystemFavoritesServiceBootLoaderUpdateOptions &options)
+{
+	options.PostOOBE = !bForce;
+	options.SetBootEntry = true;
+	options.ForceFirstBootEntry = true;
+	options.ForceSetNextBoot = false;
+
+	if (bForce)
+		return TRUE;
+
+	if (serviceFlags & VC_SYSTEM_FAVORITES_SERVICE_CONFIG_DONT_UPDATE_LOADER)
+		return FALSE;
+
+	options.ForceSetNextBoot = (serviceFlags & VC_SYSTEM_FAVORITES_SERVICE_CONFIG_FORCE_SET_BOOTNEXT) != 0;
+	options.SetBootEntry = (serviceFlags & VC_SYSTEM_FAVORITES_SERVICE_CONFIG_DONT_SET_BOOTENTRY) == 0;
+	options.ForceFirstBootEntry = (serviceFlags & VC_SYSTEM_FAVORITES_SERVICE_CONFIG_DONT_FORCE_FIRST_BOOTENTRY) == 0;
+
+	return TRUE;
+}
+
 static void SystemFavoritesServiceUpdateLoaderProcessing (BOOL bForce)
 {
 	SystemFavoritesServiceLogInfo (L"SystemFavoritesServiceUpdateLoaderProcessing called");
-	if (bForce || !(BootEncObj->ReadServiceConfigurationFlags () & VC_SYSTEM_FAVORITES_SERVICE_CONFIG_DONT_UPDATE_LOADER))
+	SystemFavoritesServiceBootLoaderUpdateOptions updateOptions;
+	uint32 serviceFlags = BootEncObj->ReadServiceConfigurationFlags ();
+	if (GetSystemFavoritesServiceBootLoaderUpdateOptions (serviceFlags, bForce, updateOptions))
 	{
 		SystemFavoritesServiceLogInfo (L"SystemFavoritesServiceUpdateLoaderProcessing processing");
 		try
@@ -10102,23 +10132,7 @@ static void SystemFavoritesServiceUpdateLoaderProcessing (BOOL bForce)
 			if (!BootEncStatus.HiddenSystem)
 			{
 				// re-install our bootloader again in case the update process has removed it.
-				bool bForceSetNextBoot = false;
-				bool bSetBootentry = true;
-				bool bForceFirstBootEntry = true;
-				bool bPostOOBE = true;
-				if (bForce)
-					bPostOOBE = false;
-				else
-				{
-					uint32 flags = BootEncObj->ReadServiceConfigurationFlags ();
-					if (flags & VC_SYSTEM_FAVORITES_SERVICE_CONFIG_FORCE_SET_BOOTNEXT)
-						bForceSetNextBoot = true;
-					if (flags & VC_SYSTEM_FAVORITES_SERVICE_CONFIG_DONT_SET_BOOTENTRY)
-						bSetBootentry = false;
-					if (flags & VC_SYSTEM_FAVORITES_SERVICE_CONFIG_DONT_FORCE_FIRST_BOOTENTRY)
-						bForceFirstBootEntry = false;
-				}
-				BootEncryption bootEnc (NULL, bPostOOBE, bSetBootentry, bForceFirstBootEntry, bForceSetNextBoot);
+				BootEncryption bootEnc (NULL, updateOptions.PostOOBE, updateOptions.SetBootEntry, updateOptions.ForceFirstBootEntry, updateOptions.ForceSetNextBoot);
 				SystemFavoritesServiceLogInfo (L"SystemFavoritesServiceUpdateLoaderProcessing: InstallBootLoader calling");
 				bootEnc.InstallBootLoader (true);
 				SystemFavoritesServiceLogInfo (L"SystemFavoritesServiceUpdateLoaderProcessing: InstallBootLoader called");
@@ -10426,9 +10440,14 @@ int WINAPI wWinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, wchar_t *lpsz
 		try
 		{
 			BootEncryption::UpdateSetupConfigFile (true);
-			// re-install our bootloader again in case the upgrade process has removed it.
-			BootEncryption bootEnc (NULL, true);
-			bootEnc.InstallBootLoader (true);
+			SystemFavoritesServiceBootLoaderUpdateOptions updateOptions;
+			uint32 serviceFlags = ReadServiceConfigurationFlags ();
+			if (GetSystemFavoritesServiceBootLoaderUpdateOptions (serviceFlags, FALSE, updateOptions))
+			{
+				// re-install our bootloader again in case the upgrade process has removed it.
+				BootEncryption bootEnc (NULL, updateOptions.PostOOBE, updateOptions.SetBootEntry, updateOptions.ForceFirstBootEntry, updateOptions.ForceSetNextBoot);
+				bootEnc.InstallBootLoader (true);
+			}
 		}
 		catch (...)
 		{
