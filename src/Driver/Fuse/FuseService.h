@@ -45,6 +45,7 @@ namespace VeraCrypt
 		static bool CheckAccessRights ();
 		static void Dismount ();
 		static int ExceptionToErrorCode ();
+		static const char *GetAuxDeviceInfoPath () { return "/aux-device-info"; }
 		static const char *GetControlPath () { return "/control"; }
 		static const char *GetVolumeImagePath ();
 		static string GetDeviceType () { return "veracrypt"; }

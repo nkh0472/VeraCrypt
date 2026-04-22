@@ -117,7 +117,7 @@ namespace VeraCrypt
 		Process::Execute ("/usr/bin/open", args);
 	}
 
-	void CoreMacOSX::MountAuxVolumeImage (const DirectoryPath &auxMountPoint, const MountOptions &options) const
+	DevicePath CoreMacOSX::MountAuxVolumeImage (const DirectoryPath &auxMountPoint, const MountOptions &options) const
 	{
 #ifndef VC_MACOSX_FUSET
 		// Check FUSE version
@@ -238,6 +238,8 @@ namespace VeraCrypt
 			catch (ExecutedProcessFailed&) { }
 			throw;
 		}
+
+		return virtualDev;
 	}
 
 	unique_ptr <CoreBase> Core (new CoreServiceProxy <CoreMacOSX>);

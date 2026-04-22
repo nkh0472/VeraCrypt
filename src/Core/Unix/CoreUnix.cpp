@@ -11,14 +11,18 @@
 */
 
 #include "CoreUnix.h"
+#include "Common/Tcdefs.h"
 #include <errno.h>
 #include <iostream>
 #include <signal.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <sys/types.h>
 #include <stdio.h>
 #include <unistd.h>
 #include "Platform/FileStream.h"
+#include "Platform/MemoryStream.h"
+#include "Platform/SystemLog.h"
 #include "Driver/Fuse/FuseService.h"
 #include "Volume/VolumePasswordCache.h"
 
@@ -347,6 +351,7 @@ namespace VeraCrypt
 			// FUSE-T builds, the mount table device name varies by backend.
 #ifdef VC_MACOSX_FUSET
 			int controlFileRetries = 10; // 10 retries with 500ms sleep each, total 5 seconds
+			string controlFileError;
 			while (!mountedVol && (controlFileRetries-- > 0))
 #endif
 			{
@@ -355,30 +360,46 @@ namespace VeraCrypt
 					shared_ptr <File> controlFile (new File);
 					controlFile->Open (string (mf.MountPoint) + FuseService::GetControlPath());
 
-					shared_ptr <Stream> controlFileStream (new FileStream (controlFile));
+					FileStream controlFileReader (controlFile);
+					string controlFileData = controlFileReader.ReadToEnd();
+					if (controlFileData.empty() || controlFileData.size() > 1024 * 1024)
+						throw ParameterIncorrect (SRC_POS);
+
+					shared_ptr <Stream> controlFileStream (new MemoryStream (ConstBufferPtr ((const uint8 *) controlFileData.data(), controlFileData.size())));
 					mountedVol = Serializable::DeserializeNew <VolumeInfo> (controlFileStream);
 				}
 				catch (const std::exception& e)
 				{
 #ifdef VC_MACOSX_FUSET
-					// if exception starts with "VeraCrypt::Serializer::ValidateName", then 
-					// serialization is not ready yet and we need to wait before retrying
-					// this happens when FUSE-T is used under macOS and if it is the first time
-					// the volume is mounted
-					if (string (e.what()).find ("VeraCrypt::Serializer::ValidateName") != string::npos)
-					{
-						Thread::Sleep(500); // Wait before retrying
-					}
-					else
-					{
-						break; // Control file not found or other error
-					}
+					controlFileError = StringConverter::ToSingle (StringConverter::ToExceptionString (e));
+					// FUSE-T's SMB backend can briefly expose the auxiliary mount
+					// before the control file is readable and deserializable.
+					Thread::Sleep (500);
+#else
+					(void) e;
 #endif
 				}
+#ifdef VC_MACOSX_FUSET
+				catch (...)
+				{
+					controlFileError = "unknown exception";
+					// FUSE-T's SMB backend can briefly expose the auxiliary mount
+					// before the control file is readable and deserializable.
+					Thread::Sleep (500);
+				}
+#endif
 			}
 
 			if (!mountedVol) 
 			{
+#ifdef VC_MACOSX_FUSET
+				stringstream logMessage;
+				logMessage << "Failed to read VeraCrypt auxiliary mount control file after retries: "
+					<< string (mf.MountPoint) << FuseService::GetControlPath();
+				if (!controlFileError.empty())
+					logMessage << ": " << controlFileError;
+				SystemLog::WriteError (logMessage.str());
+#endif
 				continue; // Skip to the next mounted filesystem
 			}
 
@@ -717,6 +738,8 @@ namespace VeraCrypt
 			throw;
 		}
 
+		DevicePath mountedVirtualDevice;
+
 		try
 		{
 			// Create a mount directory if a default path has been specified
@@ -748,7 +771,7 @@ namespace VeraCrypt
 				}
 				catch (NotApplicable&)
 				{
-					MountAuxVolumeImage (fuseMountPoint, options);
+					mountedVirtualDevice = MountAuxVolumeImage (fuseMountPoint, options);
 				}
 			}
 			catch (...)
@@ -790,17 +813,58 @@ namespace VeraCrypt
 			throw;
 		}
 
+#ifdef VC_MACOSX_FUSET
 		VolumeInfoList mountedVolumes = GetMountedVolumes (*options.Path);
-		if (mountedVolumes.size() != 1)
+		shared_ptr <VolumeInfo> mountedVolume;
+		if (mountedVolumes.size() == 1)
+		{
+			mountedVolume = mountedVolumes.front();
+		}
+		else if (!mountedVirtualDevice.IsEmpty())
+		{
+			mountedVolume.reset (new VolumeInfo);
+			mountedVolume->Set (*volume);
+			mountedVolume->ProgramVersion = VERSION_NUM;
+			mountedVolume->SlotNumber = options.SlotNumber;
+			mountedVolume->AuxMountPoint = fuseMountPoint;
+			mountedVolume->VirtualDevice = mountedVirtualDevice;
+
+			struct timeval tv;
+			gettimeofday (&tv, NULL);
+			mountedVolume->SerialInstanceNumber = (uint64) tv.tv_sec * 1000000ULL + tv.tv_usec;
+
+			if (!options.NoFilesystem)
+			{
+				for (int mountPointRetries = 20; mountPointRetries > 0; --mountPointRetries)
+				{
+					try
+					{
+						mountedVolume->MountPoint = GetDeviceMountPoint (mountedVirtualDevice);
+						if (!mountedVolume->MountPoint.IsEmpty())
+							break;
+					}
+					catch (...) { }
+
+					Thread::Sleep (500);
+				}
+			}
+		}
+#else
+		VolumeInfoList mountedVolumes = GetMountedVolumes (*options.Path);
+		shared_ptr <VolumeInfo> mountedVolume;
+		if (mountedVolumes.size() == 1)
+			mountedVolume = mountedVolumes.front();
+#endif
+		if (!mountedVolume)
 			throw ParameterIncorrect (SRC_POS);
 
-		VolumeEventArgs eventArgs (mountedVolumes.front());
+		VolumeEventArgs eventArgs (mountedVolume);
 		VolumeMountedEvent.Raise (eventArgs);
 
-		return mountedVolumes.front();
+		return mountedVolume;
 	}
 
-	void CoreUnix::MountAuxVolumeImage (const DirectoryPath &auxMountPoint, const MountOptions &options) const
+	DevicePath CoreUnix::MountAuxVolumeImage (const DirectoryPath &auxMountPoint, const MountOptions &options) const
 	{
 		DevicePath loopDev = AttachFileToLoopDevice (string (auxMountPoint) + FuseService::GetVolumeImagePath(), options.Protection == VolumeProtection::ReadOnly);
 
@@ -825,6 +889,8 @@ namespace VeraCrypt
 				options.Protection == VolumeProtection::ReadOnly,
 				StringConverter::ToSingle (options.FilesystemOptions));
 		}
+
+		return loopDev;
 	}
 
 	void CoreUnix::SetFileOwner (const FilesystemPath &path, const UserId &owner) const
