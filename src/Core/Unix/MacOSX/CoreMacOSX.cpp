@@ -76,6 +76,7 @@ namespace VeraCrypt
 
 	static bool ExtractPlistString (const string &xml, const string &key, size_t start, size_t limit, string &value, size_t *endPos = nullptr)
 	{
+		// hdiutil currently emits simple <key>name</key><string>value</string> pairs.
 		string keyTag = "<key>" + key + "</key>";
 		size_t p = xml.find (keyTag, start);
 		if (p == string::npos || p >= limit)
@@ -117,7 +118,7 @@ namespace VeraCrypt
 			normalized += *i;
 		}
 
-		if (normalized.find ("/private/var/") == 0)
+		if (normalized.find ("/private/") == 0)
 			normalized.erase (0, 8);
 
 		return normalized;
@@ -160,9 +161,9 @@ namespace VeraCrypt
 		return DevicePath();
 	}
 
-	static bool AuxiliaryControlFileHasVirtualDevice (const DirectoryPath &auxMountPoint, const DevicePath &virtualDev)
+	static bool AuxiliaryControlFileHasVirtualDevice (const DirectoryPath &auxMountPoint, const DevicePath &virtualDev, int retryCount = 50)
 	{
-		for (int t = 0; t < 50; ++t)
+		for (int t = 0; t < retryCount; ++t)
 		{
 			try
 			{
@@ -395,6 +396,7 @@ namespace VeraCrypt
 		try
 		{
 			FuseService::SendAuxDeviceInfo (auxMountPoint, virtualDev);
+#ifndef VC_MACOSX_FUSET
 			if (!AuxiliaryControlFileHasVirtualDevice (auxMountPoint, virtualDev))
 			{
 				stringstream logMessage;
@@ -405,6 +407,7 @@ namespace VeraCrypt
 
 				throw TimeOut (SRC_POS);
 			}
+#endif
 		}
 		catch (...)
 		{
@@ -420,6 +423,18 @@ namespace VeraCrypt
 			catch (ExecutedProcessFailed&) { }
 			throw;
 		}
+
+#ifdef VC_MACOSX_FUSET
+		if (!AuxiliaryControlFileHasVirtualDevice (auxMountPoint, virtualDev, 10))
+		{
+			stringstream logMessage;
+			logMessage << "VeraCrypt auxiliary mount did not report hdiutil device after mount: "
+				<< string (auxMountPoint) << FuseService::GetControlPath()
+				<< ", expected " << string (virtualDev)
+				<< "; continuing with hdiutil device";
+			SystemLog::WriteError (logMessage.str());
+		}
+#endif
 
 		return virtualDev;
 	}

@@ -62,6 +62,7 @@ namespace VeraCrypt
 	static const ino_t VC_FUSE_INODE_CONTROL = 3;
 	static const ino_t VC_FUSE_INODE_AUX_DEVICE_INFO = 4;
 	static const uint64 VC_FUSE_BLOCK_SIZE = 4096;
+	static const uint64 VC_FUSE_METADATA_SIZE = 64 * 1024;
 	static const uint64 VC_FUSE_STAT_BLOCK_SIZE = 512;
 
 	static uint64 fuse_service_ceil_div (uint64 value, uint64 divisor)
@@ -210,7 +211,7 @@ namespace VeraCrypt
 				{
 					statData->st_mode = S_IFREG | 0600;
 					statData->st_nlink = 1;
-					statData->st_size = VC_FUSE_BLOCK_SIZE;
+					statData->st_size = VC_FUSE_METADATA_SIZE;
 					statData->st_ino = VC_FUSE_INODE_AUX_DEVICE_INFO;
 					fuse_service_set_stat_blocks (statData);
 				}
@@ -226,7 +227,7 @@ namespace VeraCrypt
 				{
 					statData->st_mode = S_IFREG | 0600;
 					statData->st_nlink = 1;
-					statData->st_size = VC_FUSE_BLOCK_SIZE;
+					statData->st_size = VC_FUSE_METADATA_SIZE;
 					statData->st_ino = VC_FUSE_INODE_CONTROL;
 					fuse_service_set_stat_blocks (statData);
 				}
@@ -710,10 +711,12 @@ namespace VeraCrypt
 	{
 		shared_ptr <Stream> stream (new MemoryStream (buffer));
 		Serializer sr (stream);
+		DevicePath virtualDevice = sr.DeserializeString ("VirtualDevice");
+		DevicePath loopDevice = sr.DeserializeString ("LoopDevice");
 
 		ScopeLock lock (OpenVolumeInfoMutex);
-		OpenVolumeInfo.VirtualDevice = sr.DeserializeString ("VirtualDevice");
-		OpenVolumeInfo.LoopDevice = sr.DeserializeString ("LoopDevice");
+		OpenVolumeInfo.VirtualDevice = virtualDevice;
+		OpenVolumeInfo.LoopDevice = loopDevice;
 	}
 
 	void FuseService::SendAuxDeviceInfo (const DirectoryPath &fuseMountPoint, const DevicePath &virtualDevice, const DevicePath &loopDevice)

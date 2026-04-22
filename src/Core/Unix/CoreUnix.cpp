@@ -828,6 +828,27 @@ namespace VeraCrypt
 		if (mountedVolumes.size() == 1)
 		{
 			mountedVolume = mountedVolumes.front();
+			if (!mountedVirtualDevice.IsEmpty())
+			{
+				if (mountedVolume->VirtualDevice.IsEmpty())
+					mountedVolume->VirtualDevice = mountedVirtualDevice;
+
+				if (!options.NoFilesystem && mountedVolume->MountPoint.IsEmpty())
+				{
+					for (int mountPointRetries = 20; mountPointRetries > 0; --mountPointRetries)
+					{
+						try
+						{
+							mountedVolume->MountPoint = GetDeviceMountPoint (mountedVirtualDevice);
+							if (!mountedVolume->MountPoint.IsEmpty())
+								break;
+						}
+						catch (...) { }
+
+						Thread::Sleep (500);
+					}
+				}
+			}
 		}
 		else if (!mountedVirtualDevice.IsEmpty())
 		{
