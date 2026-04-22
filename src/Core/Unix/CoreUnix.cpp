@@ -350,7 +350,7 @@ namespace VeraCrypt
 			// The list is already filtered to VeraCrypt auxiliary mounts; in
 			// FUSE-T builds, the mount table device name varies by backend.
 #ifdef VC_MACOSX_FUSET
-			int controlFileRetries = 10; // 10 retries with 500ms sleep each, total 5 seconds
+			int controlFileRetries = volumePath.IsEmpty() ? 1 : 10; // Up to 10 attempts with 500ms sleeps for specific volume lookups
 			string controlFileError;
 			while (!mountedVol && (controlFileRetries-- > 0))
 #endif
@@ -372,9 +372,12 @@ namespace VeraCrypt
 				{
 #ifdef VC_MACOSX_FUSET
 					controlFileError = StringConverter::ToSingle (StringConverter::ToExceptionString (e));
-					// FUSE-T's SMB backend can briefly expose the auxiliary mount
-					// before the control file is readable and deserializable.
-					Thread::Sleep (500);
+					if (controlFileRetries > 0)
+					{
+						// FUSE-T's SMB backend can briefly expose the auxiliary mount
+						// before the control file is readable and deserializable.
+						Thread::Sleep (500);
+					}
 #else
 					(void) e;
 #endif
@@ -383,9 +386,12 @@ namespace VeraCrypt
 				catch (...)
 				{
 					controlFileError = "unknown exception";
-					// FUSE-T's SMB backend can briefly expose the auxiliary mount
-					// before the control file is readable and deserializable.
-					Thread::Sleep (500);
+					if (controlFileRetries > 0)
+					{
+						// FUSE-T's SMB backend can briefly expose the auxiliary mount
+						// before the control file is readable and deserializable.
+						Thread::Sleep (500);
+					}
 				}
 #endif
 			}
@@ -393,12 +399,15 @@ namespace VeraCrypt
 			if (!mountedVol) 
 			{
 #ifdef VC_MACOSX_FUSET
-				stringstream logMessage;
-				logMessage << "Failed to read VeraCrypt auxiliary mount control file after retries: "
-					<< string (mf.MountPoint) << FuseService::GetControlPath();
-				if (!controlFileError.empty())
-					logMessage << ": " << controlFileError;
-				SystemLog::WriteError (logMessage.str());
+				if (!volumePath.IsEmpty())
+				{
+					stringstream logMessage;
+					logMessage << "Failed to read VeraCrypt auxiliary mount control file after retries: "
+						<< string (mf.MountPoint) << FuseService::GetControlPath();
+					if (!controlFileError.empty())
+						logMessage << ": " << controlFileError;
+					SystemLog::WriteError (logMessage.str());
+				}
 #endif
 				continue; // Skip to the next mounted filesystem
 			}

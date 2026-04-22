@@ -51,6 +51,7 @@ namespace VeraCrypt
 		static string GetDeviceType () { return "veracrypt"; }
 		static gid_t GetGroupId () { return GroupId; }
 		static uid_t GetUserId () { return UserId; }
+		static shared_ptr <Buffer> GetAuxDeviceInfo ();
 		static shared_ptr <Buffer> GetVolumeInfo ();
 		static uint64 GetVolumeSize ();
 		static uint64 GetVolumeSectorSize () { return MountedVolume->GetSectorSize(); }
