@@ -51,6 +51,9 @@
 Volumes</em> menu.<br>
 <br>
 Default mount options can be configured in the main program preferences (<em>Settings -&gt; Preferences).</em></p>
+<h4>Filesystem mount options under Linux</h4>
+<p>Under Linux, the <em>Mount Options</em> dialog also contains a <em>Mount options</em> field for filesystem mount options. The value entered there is passed to the system <code>mount</code> command with <code>-o</code> when the filesystem inside the VeraCrypt volume is mounted. For example, entering <code>noatime</code> prevents Linux from updating inode access times on filesystems that support this option, reducing metadata writes caused only by file access. Multiple options can be specified as a comma-separated list, for example <code>noatime,nosuid,nodev</code>. Unsupported options are handled by the operating system and may cause mounting to fail.</p>
+<p>The command line equivalent is <code>veracrypt --fs-options=noatime &lt;volume&gt; &lt;mountpoint&gt;</code>.</p>
 <h4>Mount volume as read-only</h4>
 <p>When checked, it will not be possible to write any data to the mounted volume.</p>
 <h4>Mount volume as removable medium</h4>
