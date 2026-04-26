@@ -3050,21 +3050,31 @@ namespace VeraCrypt
 		return BufferHasPattern (fileContent.data (), fileContent.size (), pattern, patternLen);
 	}
 
+	static bool BufferHasVeraCryptBootLoaderPattern (const std::vector<uint8>& fileContent)
+	{
+		const wchar_t* appName = _T(TC_APP_NAME);
+		return BufferHasPattern (fileContent.data (), fileContent.size (), appName, wcslen (appName) * sizeof (wchar_t))
+			|| BufferHasPattern (fileContent.data (), fileContent.size (), TC_APP_NAME, strlen (TC_APP_NAME));
+	}
+
 	bool EfiBoot::IsVeraCryptBootLoader (const wchar_t* name)
 	{
 		std::vector<uint8> fileContent;
 		if (!ReadFileToBuffer (name, fileContent))
 			return false;
 
-		const wchar_t* appName = _T(TC_APP_NAME);
-		return BufferHasPattern (fileContent.data (), fileContent.size (), appName, wcslen (appName) * sizeof (wchar_t))
-			|| BufferHasPattern (fileContent.data (), fileContent.size (), TC_APP_NAME, strlen (TC_APP_NAME));
+		return BufferHasVeraCryptBootLoaderPattern (fileContent);
 	}
 
 	bool EfiBoot::IsWindowsBootLoader (const wchar_t* name)
 	{
+		std::vector<uint8> fileContent;
+		if (!ReadFileToBuffer (name, fileContent))
+			return false;
+
 		const char* g_szMsBootString = "bootmgfw.pdb";
-		return FileHasPattern (name, g_szMsBootString, strlen (g_szMsBootString));
+		return !BufferHasVeraCryptBootLoaderPattern (fileContent)
+			&& BufferHasPattern (fileContent.data (), fileContent.size (), g_szMsBootString, strlen (g_szMsBootString));
 	}
 
 	void EfiBoot::SaveFile(const wchar_t* name, uint8* data, DWORD size) {
@@ -4597,9 +4607,11 @@ namespace VeraCrypt
 			const wchar_t * szStdEfiBootloader = L"\\EFI\\Boot\\bootx64.efi";
 			const wchar_t * szBackupEfiBootloader = L"\\EFI\\Boot\\original_bootx64.vc_backup";
 
-			EfiBootInst.RenameFile(szBackupEfiBootloader, szStdEfiBootloader, TRUE);
+			if (!EfiBootInst.FileExists (szStdEfiBootloader) || !EfiBootInst.IsWindowsBootLoader (szStdEfiBootloader))
+				EfiBootInst.RenameFile(szBackupEfiBootloader, szStdEfiBootloader, TRUE);
 
-			if (!EfiBootInst.RenameFile(szBackupMsBootloader, szStdMsBootloader, TRUE))
+			if ((!EfiBootInst.FileExists (szStdMsBootloader) || !EfiBootInst.IsWindowsBootLoader (szStdMsBootloader))
+				&& !EfiBootInst.RenameFile(szBackupMsBootloader, szStdMsBootloader, TRUE))
 			{
 				EfiBootConf conf;
 				if (EfiBootInst.ReadConfig (L"\\EFI\\VeraCrypt\\DcsProp", conf) && strlen (conf.actionSuccessValue.c_str()))
@@ -4621,7 +4633,8 @@ namespace VeraCrypt
 							EfiBootInst.ReadFile(loaderPath.c_str(), &bootLoaderBuf[0], (DWORD) loaderSize);
 
 							// look for bootmgfw.efi identifiant string
-							if (BufferHasPattern (bootLoaderBuf.data (), (size_t) loaderSize, g_szMsBootString, strlen (g_szMsBootString)))
+							if (BufferHasPattern (bootLoaderBuf.data (), (size_t) loaderSize, g_szMsBootString, strlen (g_szMsBootString))
+								&& !BufferHasVeraCryptBootLoaderPattern (bootLoaderBuf))
 							{
 								EfiBootInst.RenameFile(loaderPath.c_str(), szStdMsBootloader, TRUE);
 							}
