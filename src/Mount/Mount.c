@@ -1312,19 +1312,9 @@ void SaveSettings (HWND hwndDlg)
 	NormalCursor ();
 }
 
-// Returns TRUE if system encryption or decryption had been or is in progress and has not been completed
-static BOOL SysEncryptionOrDecryptionRequired (void)
+static BOOL SysEncryptionOrDecryptionRequiredByCurrentStatus (void)
 {
 	/* If you update this function, revise SysEncryptionOrDecryptionRequired() in Tcformat.c as well. */
-
-	try
-	{
-		BootEncStatus = BootEncObj->GetStatus();
-	}
-	catch (Exception &e)
-	{
-		e.Show (MainDlg);
-	}
 
 	return (SystemEncryptionStatus == SYSENC_STATUS_ENCRYPTING
 		|| SystemEncryptionStatus == SYSENC_STATUS_DECRYPTING
@@ -1338,6 +1328,21 @@ static BOOL SysEncryptionOrDecryptionRequired (void)
 			)
 		)
 	);
+}
+
+// Returns TRUE if system encryption or decryption had been or is in progress and has not been completed
+static BOOL SysEncryptionOrDecryptionRequired (void)
+{
+	try
+	{
+		BootEncStatus = BootEncObj->GetStatus();
+	}
+	catch (Exception &e)
+	{
+		e.Show (MainDlg);
+	}
+
+	return SysEncryptionOrDecryptionRequiredByCurrentStatus ();
 }
 
 // Returns TRUE if system encryption master key is vulnerable
@@ -6482,11 +6487,17 @@ static void RepairEfiBootLoader (HWND hwndDlg)
 		return;
 	}
 
+	BOOL bSysEncRequired = SysEncryptionOrDecryptionRequired ();
+	BOOL bFinalizeDecryption = (SystemEncryptionStatus == SYSENC_STATUS_DECRYPTING
+		&& !BootEncStatus.SetupInProgress
+		&& !BootEncStatus.DriveEncrypted
+		&& !BootEncStatus.DriveMounted);
+
 	if (IsHiddenOSRunning()
 		|| BootEncStatus.SetupInProgress
 		|| BootEncStatus.DriveEncrypted
 		|| BootEncStatus.DriveMounted
-		|| SysEncryptionOrDecryptionRequired ())
+		|| (bSysEncRequired && !bFinalizeDecryption))
 	{
 		Warning ("EFI_BOOT_LOADER_REPAIR_BLOCKED", hwndDlg);
 		return;
@@ -6501,10 +6512,50 @@ static void RepairEfiBootLoader (HWND hwndDlg)
 		return;
 	}
 
+	LoadSysEncSettings ();
+	try
+	{
+		BootEncStatus = BootEncObj->GetStatus();
+		config = BootEncObj->GetSystemDriveConfiguration ();
+	}
+	catch (Exception &e)
+	{
+		CloseSysEncMutex ();
+		e.Show (hwndDlg);
+		return;
+	}
+
+	if (!config.SystemPartition.IsGPT)
+	{
+		CloseSysEncMutex ();
+		Warning ("EFI_BOOT_LOADER_REPAIR_NOT_APPLICABLE", hwndDlg);
+		return;
+	}
+
+	bSysEncRequired = SysEncryptionOrDecryptionRequiredByCurrentStatus ();
+	bFinalizeDecryption = (SystemEncryptionStatus == SYSENC_STATUS_DECRYPTING
+		&& !BootEncStatus.SetupInProgress
+		&& !BootEncStatus.DriveEncrypted
+		&& !BootEncStatus.DriveMounted);
+
+	if (IsHiddenOSRunning()
+		|| BootEncStatus.SetupInProgress
+		|| BootEncStatus.DriveEncrypted
+		|| BootEncStatus.DriveMounted
+		|| (bSysEncRequired && !bFinalizeDecryption))
+	{
+		CloseSysEncMutex ();
+		Warning ("EFI_BOOT_LOADER_REPAIR_BLOCKED", hwndDlg);
+		return;
+	}
+
 	WaitCursor ();
 	try
 	{
-		BootEncObj->RestoreSystemLoader ();
+		if (bFinalizeDecryption)
+			BootEncObj->Deinstall (true);
+		else
+			BootEncObj->RestoreSystemLoader ();
 	}
 	catch (Exception &e)
 	{
@@ -6514,7 +6565,19 @@ static void RepairEfiBootLoader (HWND hwndDlg)
 		return;
 	}
 
-	NormalCursor ();
+	if (bFinalizeDecryption)
+	{
+		NormalCursor ();
+		if (!ClearSystemEncryptionStatus (hwndDlg))
+		{
+			CloseSysEncMutex ();
+			return;
+		}
+		ManageStartupSeqWiz (TRUE, L"");
+	}
+	else
+		NormalCursor ();
+
 	CloseSysEncMutex ();
 	Info ("EFI_BOOT_LOADER_REPAIR_SUCCESS", hwndDlg);
 }
