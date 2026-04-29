@@ -644,13 +644,10 @@
     <entry lang="zh-hk" key="PIM_HIDVOL_TITLE">隱藏加密區 PIM</entry>
     <entry lang="zh-hk" key="PIM_HIDDEN_OS_TITLE">隱藏系統 PIM</entry>
     <entry lang="zh-hk" key="PIM_HELP">PIM (個人迭代倍數, Personal Iterations Multiplier)是一個標頭數據加密鑰衍生演算法用來控制迭代次數數目的數值如下所示：\n      迭代次數 = 15000 + (PIM x 1000)。\n\n當該數值留空或設定為 0 時，VeraCrypt 將會使用預設數值 (485) 以確保高度的安全性。\n\n當密碼的長度短於 20 字元時，PIM 的數值不可少於 485 以保持最低限度的安全性程度。\n當密碼的長度是 20 或更長時， PIM 可以設定為任何數值。\n\n一個大於 485 的 PIM 數值會引致掛載速度緩慢。一個細的 PIM 數值 (少於 485) 將可以令掛載速度較快，但如果同時密碼強度不足的話則會降低安全性。</entry>
-    <entry lang="en" key="PIM_ARGON2_HELP">PIM (Personal Iterations Multiplier) controls the memory and time costs used by Argon2id header key derivation as follows:\n      Memory = min(64 MiB + ((PIM - 1) x 32 MiB), 1024 MiB)\n      Iterations = 3 + ((PIM - 1) / 3) for PIM 31 or lower, then 13 + (PIM - 31)\n\nWhen left empty or set to 0, VeraCrypt will use the default Argon2 PIM (12), which uses 416 MiB of memory and 6 iterations.\n\nWhen the password is less than 20 characters, Argon2 PIM can't be smaller than 12 in order to maintain a minimal security level.\nWhen the password is 20 characters or more, Argon2 PIM can be set to any value.\n\nAn Argon2 PIM larger than 12 increases memory usage up to 1024 MiB and then increases iterations. This will lead to slower mounting. A small Argon2 PIM (less than 12) will lead to quicker mounting but it can reduce security if the password is not strong enough.</entry>
     <entry lang="zh-hk" key="PIM_SYSENC_HELP">PIM (個人迭代倍數, Personal Iterations Multiplier)是一個標頭數據加密鑰衍生演算法用來控制迭代次數數目的數值如下所示：\n      迭代次數 = PIM x 2048.\n\n。\n\n當該數值留空或設定為 0 時，VeraCrypt 將會使用預設數值以確保高度的安全性。\n\n當密碼的長度短於 20 字元時，PIM 的數值不可少於 98 以保持最低限度的安全性程度。\n當密碼的長度是 20 或更長時， PIM 可以設定為任何數值。\n\n一個大於 98 的 PIM 數值會引致開機速度緩慢。一個細的 PIM 數值 (少於 98) 將可以令開機速度較快，但如果同時密碼強度不足的話則會降低安全性。</entry>
     <entry lang="zh-hk" key="PIM_SYSENC_CHANGE_WARNING">記住這個用來重新啟動系統的數字</entry>
     <entry lang="zh-hk" key="PIM_LARGE_WARNING">選擇了一個大於 VeraCrypt 預設的 PIM 值。\n請注意這樣會造成掛載/啟動速度變慢。</entry>
-    <entry lang="en" key="PIM_ARGON2_LARGE_WARNING">You have chosen an Argon2 PIM value that is larger than VeraCrypt default value.\nPlease note that this can require more memory and lead to much slower mounting.</entry>
     <entry lang="zh-hk" key="PIM_SMALL_WARNING">你已選擇了數值細於預設的個人迭代倍數(Personal Iterations Multiplier, PIM)。請注意如你的密碼強度不足的話，將會引致較弱的安全性。\n\n你是否確認會使用一個強度高的密碼？</entry>
-    <entry lang="en" key="PIM_ARGON2_SMALL_WARNING">You have chosen an Argon2 PIM value that is smaller than the default VeraCrypt value. Please note that if your password is not strong enough, this could lead to weaker security.\n\nDo you confirm that you are using a strong password?</entry>
     <entry lang="zh-hk" key="PIM_SYSENC_TOO_BIG">用於系統加密的個人迭代倍數(Personal Iterations Multiplier, PIM) 最大數值為 65535</entry>
     <entry lang="zh-hk" key="PIM_TITLE">加密區 PIM</entry>
     <entry lang="zh-hk" key="HIDDEN_FILES_PRESENT_IN_KEYFILE_PATH">\n\n警告：在加密鑰檔案的搜尋路徑中找到一個或多個的隱藏的檔案，這些檔案將不會用作加密鑰檔案。如你想要使用這些檔案作為加密鑰檔案，請移除這些檔案的隱藏屬性 (右按每個檔案然後選擇 [內容]，取消剔選 [隱藏] 然後按 [確定])。請注意：隱藏檔案只會在相關選項啟用時才會被顯示 (本機 &gt; 整理  &gt; [變更資料夾和搜尋選項]  &gt; 檢示)。</entry>
@@ -1107,7 +1104,6 @@
     <entry lang="zh-hk" key="ALGO_NOT_SUPPORTED_FOR_TRUECRYPT_MODE">此演算法不支援 TrueCrypt 模式。</entry>
     <entry lang="zh-hk" key="PIM_NOT_SUPPORTED_FOR_TRUECRYPT_MODE">TrueCrypt 模式不支援 PIM (Personal Iterations Multiplier) </entry>
     <entry lang="zh-hk" key="PIM_REQUIRE_LONG_PASSWORD">密碼必須含有 20 或更多的字元長度以使用所指定的 PIM。\nPIM 需要是 485 或更高才可以使用較短的密碼。</entry>
-    <entry lang="en" key="PIM_ARGON2_REQUIRE_LONG_PASSWORD">Password must contain 20 or more characters in order to use the specified Argon2 PIM.\nShorter passwords can only be used if the Argon2 PIM is 12 or greater.</entry>
     <entry lang="zh-hk" key="BOOT_PIM_REQUIRE_LONG_PASSWORD">啟動前驗證密碼必須含有 20 個或更多的字元以使用這個 PIM 數值。\n只可以在 PIM 的數值是 98 或更大時才可以使用較短的密碼。</entry>
     <entry lang="zh-hk" key="KEYFILES_NOT_SUPPORTED_FOR_SYS_ENCRYPTION">加密鑰檔案目前並不支援用於系統加密。</entry>
     <entry lang="zh-hk" key="CANNOT_RESTORE_KEYBOARD_LAYOUT">警告：VeraCrypt 不能儲存原始鍵盤配置。這可能導致你無法正確輸入密碼。</entry>
@@ -1473,8 +1469,6 @@
     <entry lang="zh-hk" key="LINUX_PREF_KERNEL_CRYPT">不要使用系統核心加密服務</entry>
     <entry lang="zh-hk" key="LINUX_PREF_TAB_MOUNT_OPTIONS_FS">檔案系統</entry>
     <entry lang="zh-hk" key="IDT_LINUX_PREF_TAB_MOUNT_OPTIONS">掛載選項:</entry>
-    <entry lang="en" key="LINUX_PREF_MOUNT_NTFS_WITH_NTFS3">Mount NTFS volumes with the Linux kernel ntfs3 driver</entry>
-    <entry lang="en" key="LINUX_PREF_MOUNT_NTFS_WITH_NTFS3_HELP">Linux only. When enabled, VeraCrypt probes the decrypted virtual device with blkid -p and mounts detected NTFS filesystems with ntfs3 instead of the default NTFS backend. If NTFS detection fails, VeraCrypt uses the normal automatic filesystem selection. If ntfs3 is unavailable or blocked by the distribution, mounting may fail. This opt-in option can avoid suspend or hibernate hangs caused by frozen user-space FUSE filesystems.</entry>
     <entry lang="zh-hk" key="LINUX_CROSS_SUPPORT">跨平台支援</entry>
     <entry lang="zh-hk" key="LINUX_CROSS_SUPPORT_OTHER">我將會在其他平台掛載這個加密區</entry>
     <entry lang="zh-hk" key="LINUX_CROSS_SUPPORT_OTHER_HELP">如你需要於其他平台上掛載此加密區請選取此選項。</entry>
@@ -1670,6 +1664,12 @@
     <entry lang="en" key="EFI_BOOT_LOADER_REPAIR_BLOCKED">The EFI boot loader cannot be repaired while system encryption or decryption is active or incomplete. Complete or resume the pending system encryption/decryption process before retrying.</entry>
     <entry lang="en" key="EFI_BOOT_LOADER_REPAIR_NOT_APPLICABLE">This repair action is available only on systems booting in UEFI mode from a GPT system partition.</entry>
     <entry lang="en" key="EFI_BOOT_LOADER_REPAIR_SUCCESS">The EFI boot loader has been repaired successfully.</entry>
+    <entry lang="en" key="PIM_ARGON2_HELP">PIM (Personal Iterations Multiplier) controls the memory and time costs used by Argon2id header key derivation as follows:\n      Memory = min(64 MiB + ((PIM - 1) x 32 MiB), 1024 MiB)\n      Iterations = 3 + ((PIM - 1) / 3) for PIM 31 or lower, then 13 + (PIM - 31)\n\nWhen left empty or set to 0, VeraCrypt will use the default Argon2 PIM (12), which uses 416 MiB of memory and 6 iterations.\n\nWhen the password is less than 20 characters, Argon2 PIM can't be smaller than 12 in order to maintain a minimal security level.\nWhen the password is 20 characters or more, Argon2 PIM can be set to any value.\n\nAn Argon2 PIM larger than 12 increases memory usage up to 1024 MiB and then increases iterations. This will lead to slower mounting. A small Argon2 PIM (less than 12) will lead to quicker mounting but it can reduce security if the password is not strong enough.</entry>
+    <entry lang="en" key="PIM_ARGON2_LARGE_WARNING">You have chosen an Argon2 PIM value that is larger than VeraCrypt default value.\nPlease note that this can require more memory and lead to much slower mounting.</entry>
+    <entry lang="en" key="PIM_ARGON2_SMALL_WARNING">You have chosen an Argon2 PIM value that is smaller than the default VeraCrypt value. Please note that if your password is not strong enough, this could lead to weaker security.\n\nDo you confirm that you are using a strong password?</entry>
+    <entry lang="en" key="PIM_ARGON2_REQUIRE_LONG_PASSWORD">Password must contain 20 or more characters in order to use the specified Argon2 PIM.\nShorter passwords can only be used if the Argon2 PIM is 12 or greater.</entry>
+    <entry lang="en" key="LINUX_PREF_MOUNT_NTFS_WITH_NTFS3">Mount NTFS volumes with the Linux kernel ntfs3 driver</entry>
+    <entry lang="en" key="LINUX_PREF_MOUNT_NTFS_WITH_NTFS3_HELP">Linux only. When enabled, VeraCrypt probes the decrypted virtual device with blkid -p and mounts detected NTFS filesystems with ntfs3 instead of the default NTFS backend. If NTFS detection fails, VeraCrypt uses the normal automatic filesystem selection. If ntfs3 is unavailable or blocked by the distribution, mounting may fail. This opt-in option can avoid suspend or hibernate hangs caused by frozen user-space FUSE filesystems.</entry>
   </localization>
   <xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
     <xs:element name="VeraCrypt">
