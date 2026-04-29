@@ -455,8 +455,16 @@ namespace VeraCrypt
 			// Mount filesystem
 			if (!options.NoFilesystem && options.MountPoint && !options.MountPoint->IsEmpty())
 			{
+				wstring filesystemType = options.FilesystemType;
+
+				if (options.MountNtfsWithNtfs3 && filesystemType.empty()
+					&& DetectFilesystemType (nativeDevPath) == "ntfs")
+				{
+					filesystemType = L"ntfs3";
+				}
+
 				MountFilesystem (nativeDevPath, *options.MountPoint,
-					StringConverter::ToSingle (options.FilesystemType),
+					StringConverter::ToSingle (filesystemType),
 					options.Protection == VolumeProtection::ReadOnly,
 					StringConverter::ToSingle (options.FilesystemOptions));
 

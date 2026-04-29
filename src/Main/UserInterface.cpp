@@ -1259,6 +1259,19 @@ const FileManager fileManagers[] = {
 					" with option -t. Default type is 'auto'. When creating a new volume, this\n"
 					" option specifies the filesystem to be created on the new volume.\n"
 					" Filesystem type 'none' disables mounting or creating a filesystem.\n"
+#ifdef TC_LINUX
+					" On Linux, filesystem type 'ntfs3' mounts an NTFS volume using the\n"
+					" in-kernel ntfs3 driver. The ntfs3 kernel module must be available\n"
+					" and allowed by the distribution; otherwise mounting may fail.\n"
+					" The Linux preference \"Mount NTFS volumes with the Linux kernel ntfs3\n"
+					" driver\" is disabled by default. When enabled, VeraCrypt probes the\n"
+					" decrypted virtual device with blkid -p and applies ntfs3 only when\n"
+					" NTFS is detected and no explicit filesystem type was supplied. If\n"
+					" detection fails, VeraCrypt uses the normal automatic filesystem\n"
+					" selection. This can avoid suspend or hibernate hangs caused by frozen\n"
+					" user-space FUSE filesystems during kernel filesystem sync; use findmnt\n"
+					" to verify the actual mounted filesystem type.\n"
+#endif
 					"\n"
 					"--force\n"
 					" Force mounting of a volume in use, unmounting of a volume in use, or\n"
@@ -1398,6 +1411,11 @@ const FileManager fileManagers[] = {
 					"Mount a volume prompting only for its password:\n"
 					"veracrypt -t -k \"\" --pim=0 --protect-hidden=no volume.hc /media/veracrypt1\n"
 					"\n"
+#ifdef TC_LINUX
+					"Mount an NTFS volume using the Linux in-kernel ntfs3 driver:\n"
+					"veracrypt -t --filesystem=ntfs3 volume.hc /media/veracrypt1\n"
+					"\n"
+#endif
 					"Unmount a volume:\n"
 					"veracrypt -u volume.hc\n"
 					"\n"
