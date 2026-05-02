@@ -59,6 +59,7 @@ namespace VeraCrypt
 		void OnThreadExiting (wxCommandEvent& event);
 		void OnVolumeCreatorFinished ();
 		WizardStep ProcessPageChangeRequest (bool forward);
+		void SetCreationProgressText (const wxString &text);
 
 		volatile bool AbortConfirmationPending;
 		volatile bool AbortRequested;

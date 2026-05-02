@@ -429,11 +429,14 @@ namespace VeraCrypt
 		VolumeCreator::ProgressInfo progress = Creator->GetProgressInfo();
 
 		VolumeCreationProgressWizardPage *page = dynamic_cast <VolumeCreationProgressWizardPage *> (GetCurrentPage());
-		page->SetProgressValue (progress.SizeDone);
+		if (page)
+		{
+			page->SetProgressStage (progress.Stage);
+			page->SetProgressValue (progress.SizeDone);
+		}
 
 		if (!progress.CreationInProgress && !AbortConfirmationPending)
 		{
-			SetWorkInProgress (false);
 			OnVolumeCreatorFinished ();
 		}
 	}
@@ -447,16 +450,29 @@ namespace VeraCrypt
 		}
 	}
 
+	void VolumeCreationWizard::SetCreationProgressText (const wxString &text)
+	{
+		VolumeCreationProgressWizardPage *page = dynamic_cast <VolumeCreationProgressWizardPage *> (GetCurrentPage());
+		if (!page)
+			return;
+
+		page->SetPageText (text);
+		page->Refresh();
+		page->Update();
+		Gui->Yield();
+	}
+
 	void VolumeCreationWizard::OnVolumeCreatorFinished ()
 	{
 		VolumeCreationProgressWizardPage *page = dynamic_cast <VolumeCreationProgressWizardPage *> (GetCurrentPage());
 
 		ProgressTimer.reset();
-		page->SetProgressState (false);
-
-		Gui->EndInteractiveBusyState (this);
-		SetWorkInProgress (false);
-		UpdateControls();
+		if (page)
+		{
+			page->SetProgressState (false);
+			page->EnableAbort (false);
+		}
+		bool workInProgressCleared = false;
 
 		try
 		{
@@ -472,6 +488,8 @@ namespace VeraCrypt
 				{
 					wxBusyCursor busy;
 
+					SetCreationProgressText (LangString["FORMAT_STAGE_PREPARING_TEMP_VOLUME"]);
+
 					MountOptions mountOptions (Gui->GetPreferences().DefaultMountOptions);
 					mountOptions.Path = make_shared <VolumePath> (SelectedVolumePath);
 					mountOptions.NoFilesystem = true;
@@ -483,10 +501,11 @@ namespace VeraCrypt
 
 					shared_ptr <VolumeInfo> volume = Core->MountVolume (mountOptions);
 					finally_do_arg (shared_ptr <VolumeInfo>, volume, { Core->DismountVolume (finally_arg, true); });
-					
+
 					shared_ptr <VolumeLayout> layout((volume->Type == VolumeType::Normal)? (VolumeLayout*) new VolumeLayoutV2Normal() : (VolumeLayout*) new VolumeLayoutV2Hidden());
 					uint64 filesystemSize = layout->GetMaxDataSize (VolumeSize);
 
+					SetCreationProgressText (LangString["FORMAT_STAGE_PREPARING_TEMP_DEVICE"]);
 					Thread::Sleep (2000);	// Try to prevent race conditions caused by OS
 
 					// Temporarily take ownership of the device if the user is not an administrator
@@ -540,9 +559,15 @@ namespace VeraCrypt
 
 					args.push_back (string (virtualDevice));
 
+					SetCreationProgressText (StringFormatter (LangString["FORMAT_STAGE_CREATING_FILESYSTEM"], fsFormatter));
 					Process::Execute (fsFormatter, args);
+					SetCreationProgressText (LangString["FORMAT_STAGE_DISMOUNTING_TEMP_VOLUME"]);
 				}
 #endif // TC_UNIX
+
+				Gui->EndInteractiveBusyState (this);
+				SetWorkInProgress (false);
+				workInProgressCleared = true;
 
 				if (OuterVolume)
 				{
@@ -559,10 +584,24 @@ namespace VeraCrypt
 		}
 		catch (exception &e)
 		{
+			if (!workInProgressCleared)
+			{
+				Gui->EndInteractiveBusyState (this);
+				SetWorkInProgress (false);
+				workInProgressCleared = true;
+			}
 			Gui->ShowError (e);
 		}
 
-		page->SetProgressValue (0);
+		if (!workInProgressCleared)
+		{
+			Gui->EndInteractiveBusyState (this);
+			SetWorkInProgress (false);
+		}
+
+		if (page)
+			page->SetProgressValue (0);
+
 		if (SelectedVolumeType == VolumeType::Normal && !SelectedVolumePath.IsDevice())
 		{
 			try

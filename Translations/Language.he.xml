@@ -1672,6 +1672,16 @@
     <entry lang="en" key="LINUX_PREF_MOUNT_NTFS_WITH_NTFS3_HELP">Linux only. When enabled, VeraCrypt probes the decrypted virtual device with blkid -p and mounts detected NTFS filesystems with ntfs3 instead of the default NTFS backend. If NTFS detection fails, VeraCrypt uses the normal automatic filesystem selection. If ntfs3 is unavailable or blocked by the distribution, mounting may fail. This opt-in option can avoid suspend or hibernate hangs caused by frozen user-space FUSE filesystems.</entry>
     <entry lang="en" key="LINUX_EMERGENCY_UNMOUNT_WARNING">Normal unmount of volume {0} failed. This can happen when applications still have files or directories open on the volume, or when the backing device was disconnected and the mount became stale.\n\nIf the device is still connected, choose No, close applications using the volume, and try unmounting again.\n\nIf the device was disconnected or the mount is stale, VeraCrypt can attempt emergency cleanup by lazy-detaching the filesystem and removing or scheduling removal of VeraCrypt kernel objects. Pending writes may have failed, data may be lost, and cleanup may remain pending until applications close open files. Check the filesystem with fsck or the appropriate repair tool before using it again.\n\nContinue?</entry>
     <entry lang="en" key="LINUX_EMERGENCY_UNMOUNTED">Emergency cleanup for volume {0} has been initiated. If the volume was disconnected, the mount was stale, or there were pending writes, check the filesystem with fsck or the appropriate repair tool before using it again.</entry>
+    <entry lang="en" key="FORMAT_STAGE_WRITING_DATA">Creating volume data. Please wait.</entry>
+    <entry lang="en" key="FORMAT_STAGE_WRITING_BACKUP_HEADER">Finalizing volume creation: writing backup header.</entry>
+    <entry lang="en" key="FORMAT_STAGE_FLUSHING_DATA">Finalizing volume creation: flushing data to disk. This can take several minutes on large volumes or slow/USB storage.</entry>
+    <entry lang="en" key="FORMAT_STAGE_FINISHED">Finalizing volume creation.</entry>
+    <entry lang="en" key="FORMAT_STAGE_ABORTED">Volume creation has been aborted.</entry>
+    <entry lang="en" key="FORMAT_STAGE_ERROR">Volume creation failed.</entry>
+    <entry lang="en" key="FORMAT_STAGE_PREPARING_TEMP_VOLUME">Finalizing volume creation: mounting temporary volume.</entry>
+    <entry lang="en" key="FORMAT_STAGE_PREPARING_TEMP_DEVICE">Finalizing volume creation: preparing temporary device.</entry>
+    <entry lang="en" key="FORMAT_STAGE_CREATING_FILESYSTEM">Finalizing volume creation: creating filesystem using {0}.</entry>
+    <entry lang="en" key="FORMAT_STAGE_DISMOUNTING_TEMP_VOLUME">Finalizing volume creation: dismounting temporary volume.</entry>
   </localization>
   <xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified">
     <xs:element name="VeraCrypt">
