@@ -1382,6 +1382,10 @@ retry_preallocated:
 		goto noMemory;
 	}
 
+	// TCalloc does not zero memory: the cleanup at err: scans the whole pool
+	// and frees any non-NULL WorkItem, so all entries must start as NULL
+	RtlZeroMemory(queue->WorkItemPool, workItemPoolSize);
+
 	// Allocate and initialize work items
 	for (i = 0; i < (int) queue->MaxWorkItems; ++i)
 	{
@@ -1514,6 +1518,9 @@ NTSTATUS EncryptedIoQueueStop (EncryptedIoQueue *queue)
 		}
 	}
 	TCfree(queue->WorkItemPool);
+	// Clear the pointer: the boot drive filter reuses this queue struct across
+	// mount cycles, and a failed restart would otherwise free it again at err:
+	queue->WorkItemPool = NULL;
 
 	TCfree (queue->FragmentBufferA);
 	TCfree (queue->FragmentBufferB);
