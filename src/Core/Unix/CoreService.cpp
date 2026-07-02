@@ -147,6 +147,48 @@ namespace VeraCrypt
 			close (f);
 	}
 
+#ifdef TC_FREEBSD
+	static string TrimCommandOutput (const string &output)
+	{
+		size_t first = output.find_first_not_of (" \t\r\n");
+		if (first == string::npos)
+			return string();
+
+		size_t last = output.find_last_not_of (" \t\r\n");
+		return output.substr (first, last - first + 1);
+	}
+
+	static bool IsFreeBSDSecurityDoasPackage (const string &doasPath)
+	{
+		try
+		{
+			std::string errorMsg;
+			string pkgPath = Process::FindSystemBinary ("pkg", errorMsg);
+			if (pkgPath.empty())
+				return false;
+
+			list <string> args;
+			args.push_back ("which");
+			args.push_back ("-q");
+			args.push_back (doasPath);
+			string packageName = TrimCommandOutput (Process::Execute (pkgPath, args, 5000));
+			if (packageName.empty())
+				return false;
+
+			args.clear();
+			args.push_back ("info");
+			args.push_back ("-q");
+			args.push_back ("-o");
+			args.push_back (packageName);
+			string packageOrigin = TrimCommandOutput (Process::Execute (pkgPath, args, 5000));
+			return packageOrigin == "security/doas";
+		}
+		catch (...) { }
+
+		return false;
+	}
+#endif
+
 	static PrivilegeHelper FindPrivilegeHelper ()
 	{
 		std::string errorMsg;
@@ -156,7 +198,13 @@ namespace VeraCrypt
 
 		path = Process::FindSystemBinary ("doas", errorMsg);
 		if (!path.empty())
+		{
+#ifdef TC_FREEBSD
+			if (IsFreeBSDSecurityDoasPackage (path))
+				throw ElevationFailed (SRC_POS, "doas", 1, "The FreeBSD security/doas package is incompatible with VeraCrypt elevation. Install security/opendoas or sudo.");
+#endif
 			return { PrivilegeHelperType::Doas, "doas", path };
+		}
 
 		throw SystemException (SRC_POS, "Neither sudo nor doas was found in system directories");
 	}
@@ -304,7 +352,7 @@ namespace VeraCrypt
 			throw SystemException (SRC_POS, "Failed to set doas authentication terminal as controlling terminal");
 		}
 #endif
-#ifdef TC_OPENBSD
+#if defined (TC_OPENBSD) || defined (TC_FREEBSD)
 		if (tcsetpgrp (ttyFd, getpgrp()) == -1)
 		{
 			int err = errno;
@@ -569,7 +617,7 @@ namespace VeraCrypt
 		}
 	}
 
-#ifdef TC_OPENBSD
+#if defined (TC_OPENBSD) || defined (TC_FREEBSD)
 	static bool ReadDoasAuthTerminalPromptData (int fd, vector <char> &authOutput)
 	{
 		char buffer[256];
@@ -1389,11 +1437,11 @@ namespace VeraCrypt
 					}
 #endif
 					bool useDoasAuthTerminal = privilegeHelper.IsDoas() && !useCallerDoasTerminal;
-#ifdef TC_OPENBSD
-					// OpenBSD doas requires stderr to be a terminal while it
-					// prompts for the password. Keeping the private PTY slave
-					// on stderr satisfies that while stdin/stdout stay as the
-					// service pipes.
+#if defined (TC_OPENBSD) || defined (TC_FREEBSD)
+					// OpenBSD doas and FreeBSD opendoas require stderr to be
+					// a terminal while prompting for the password. Keeping the
+					// private PTY slave on stderr satisfies that while stdin/stdout
+					// stay as the service pipes.
 					bool keepDoasStderrOnAuthTerminal = useDoasAuthTerminal;
 #else
 					bool keepDoasStderrOnAuthTerminal = false;
@@ -1486,7 +1534,7 @@ namespace VeraCrypt
 		{
 			// doas reads authentication from the controlling terminal, not stdin.
 			bool writeDoasPassword = true;
-#ifdef TC_OPENBSD
+#if defined (TC_OPENBSD) || defined (TC_FREEBSD)
 			writeDoasPassword = WaitForDoasAuthTerminalPrompt (doasAuthTerminal, authOutput, timeout);
 #endif
 			if (writeDoasPassword)
@@ -1504,7 +1552,7 @@ namespace VeraCrypt
 			shared_ptr <Stream> outputStream (new FileStream (serviceOutputFd));
 			int authOutputFd = -1;
 
-#ifdef TC_OPENBSD
+#if defined (TC_OPENBSD) || defined (TC_FREEBSD)
 			if (doasAuthTerminal != -1)
 			{
 				int authTerminalFlags = fcntl (doasAuthTerminal, F_GETFL, 0);
