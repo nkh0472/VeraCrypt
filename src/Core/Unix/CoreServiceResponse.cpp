@@ -110,6 +110,18 @@ namespace VeraCrypt
 	}
 #endif
 
+#ifdef TC_OPENBSD
+	// ExecuteOpenBSDFFSFormatterResponse
+	void ExecuteOpenBSDFFSFormatterResponse::Deserialize (shared_ptr <Stream> stream)
+	{
+	}
+
+	void ExecuteOpenBSDFFSFormatterResponse::Serialize (shared_ptr <Stream> stream) const
+	{
+		Serializable::Serialize (stream);
+	}
+#endif
+
 	// MountVolumeResponse
 	void MountVolumeResponse::Deserialize (shared_ptr <Stream> stream)
 	{
@@ -143,6 +155,9 @@ namespace VeraCrypt
 	TC_SERIALIZER_FACTORY_ADD_CLASS (GetHostDevicesResponse);
 #ifdef TC_MACOSX
 	TC_SERIALIZER_FACTORY_ADD_CLASS (ExecuteMacOSXAPFSFormatterResponse);
+#endif
+#ifdef TC_OPENBSD
+	TC_SERIALIZER_FACTORY_ADD_CLASS (ExecuteOpenBSDFFSFormatterResponse);
 #endif
 	TC_SERIALIZER_FACTORY_ADD_CLASS (MountVolumeResponse);
 	TC_SERIALIZER_FACTORY_ADD_CLASS (SetFileOwnerResponse);

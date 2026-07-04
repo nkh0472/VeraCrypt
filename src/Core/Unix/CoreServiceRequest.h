@@ -142,6 +142,22 @@ namespace VeraCrypt
 	};
 #endif
 
+#ifdef TC_OPENBSD
+	struct ExecuteOpenBSDFFSFormatterRequest : CoreServiceRequest
+	{
+		ExecuteOpenBSDFFSFormatterRequest () { }
+		ExecuteOpenBSDFFSFormatterRequest (const DevicePath &devicePath, uint64 userId, uint64 groupId)
+			: Device (devicePath), OwnerGroupId (groupId), OwnerUserId (userId) { }
+		TC_SERIALIZABLE (ExecuteOpenBSDFFSFormatterRequest);
+
+		virtual bool RequiresElevation () const;
+
+		DevicePath Device;
+		uint64 OwnerGroupId;
+		uint64 OwnerUserId;
+	};
+#endif
+
 	struct MountVolumeRequest : CoreServiceRequest
 	{
 		MountVolumeRequest () { }

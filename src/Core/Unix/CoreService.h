@@ -39,6 +39,10 @@ namespace VeraCrypt
 		static const char *GetMacOSXAPFSFormatterPath ();
 		static void RequestExecuteMacOSXAPFSFormatter (const DevicePath &devicePath, uint64 userId, uint64 groupId);
 #endif
+#ifdef TC_OPENBSD
+		static const char *GetOpenBSDFFSFormatterPath ();
+		static void RequestExecuteOpenBSDFFSFormatter (const DevicePath &devicePath, uint64 userId, uint64 groupId);
+#endif
 		static shared_ptr <VolumeInfo> RequestMountVolume (MountOptions &options);
 		static void RequestSetFileOwner (const FilesystemPath &path, const UserId &owner);
 		static void SetAdminPasswordCallback (shared_ptr <GetStringFunctor> functor) { AdminPasswordCallback = functor; }

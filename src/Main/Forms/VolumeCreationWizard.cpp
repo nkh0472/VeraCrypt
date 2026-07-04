@@ -25,6 +25,9 @@
 #ifdef TC_MACOSX
 #include "Main/MacOSXFormatterDevice.h"
 #endif
+#ifdef TC_OPENBSD
+#include "Main/OpenBSDFormatterDevice.h"
+#endif
 #include "Main/Resources.h"
 #include "VolumeCreationWizard.h"
 #include "EncryptionOptionsWizardPage.h"
@@ -857,9 +860,11 @@ namespace VeraCrypt
 
 					// Temporarily take ownership of the device if the user is not an administrator
 					DevicePath virtualDevice = volume->VirtualDevice;
+					DevicePath formatterDevice = virtualDevice;
 #ifdef TC_MACOSX
 					string virtualDeviceStr = virtualDevice;
 					virtualDevice = GetMacOSXRawDevicePath (virtualDeviceStr);
+					formatterDevice = virtualDevice;
 
 					MacOSXFormatterDeviceOwnerRestoreList changedDeviceOwners;
 					finally_do_arg (MacOSXFormatterDeviceOwnerRestoreList *, &changedDeviceOwners,
@@ -868,25 +873,37 @@ namespace VeraCrypt
 					});
 					bool useElevatedAPFSFormatter = UseElevatedMacOSXAPFSFormatter (fsFormatter);
 					if (!useElevatedAPFSFormatter)
-						PrepareMacOSXFormatterDevice (virtualDevice, changedDeviceOwners);
+						PrepareMacOSXFormatterDevice (formatterDevice, changedDeviceOwners);
 #else
+#ifdef TC_OPENBSD
+					if (SelectedFilesystemType == VolumeCreationOptions::FilesystemType::FFS)
+						formatterDevice = GetOpenBSDRawFormatterDevicePath (virtualDevice);
+#endif
+					bool prepareFormatterDeviceOwnership = true;
+#ifdef TC_OPENBSD
+					if (SelectedFilesystemType == VolumeCreationOptions::FilesystemType::FFS)
+						prepareFormatterDeviceOwnership = false;
+#endif
 					UserId origDeviceOwner ((uid_t) -1);
 
-					try
+					if (prepareFormatterDeviceOwnership)
 					{
-						File file;
-						file.Open (virtualDevice, File::OpenReadWrite);
-					}
-					catch (...)
-					{
-						if (!Core->HasAdminPrivileges())
+						try
 						{
-							origDeviceOwner = virtualDevice.GetOwner();
-							Core->SetFileOwner (virtualDevice, UserId (getuid()));
+							File file;
+							file.Open (formatterDevice, File::OpenReadWrite);
+						}
+						catch (...)
+						{
+							if (!Core->HasAdminPrivileges())
+							{
+								origDeviceOwner = formatterDevice.GetOwner();
+								Core->SetFileOwner (formatterDevice, UserId (getuid()));
+							}
 						}
 					}
 
-					finally_do_arg2 (FilesystemPath, virtualDevice, UserId, origDeviceOwner,
+					finally_do_arg2 (FilesystemPath, formatterDevice, UserId, origDeviceOwner,
 					{
 						if (finally_arg2.SystemId != (uid_t) -1)
 							Core->SetFileOwner (finally_arg, finally_arg2);
@@ -921,11 +938,13 @@ namespace VeraCrypt
 						AddMacOSXAPFSFormatterUserArgs (args);
 #endif
 
-					args.push_back (string (virtualDevice));
+					args.push_back (string (formatterDevice));
 
 					SetCreationProgressText (StringFormatter (LangString["FORMAT_STAGE_CREATING_FILESYSTEM"], fsFormatter));
 #ifdef TC_MACOSX
 					ExecuteMacOSXFilesystemFormatter (fsFormatter, args);
+#elif defined (TC_OPENBSD)
+					ExecuteOpenBSDFilesystemFormatter (fsFormatter, args);
 #else
 					Process::Execute (fsFormatter, args);
 #endif

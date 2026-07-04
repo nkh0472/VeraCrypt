@@ -55,7 +55,8 @@ namespace VeraCrypt
 				Btrfs,
 				MacOsExt,
 				APFS,
-				UFS
+				UFS,
+				FFS
 			};
 
 			static Enum GetPlatformNative ()
@@ -68,6 +69,8 @@ namespace VeraCrypt
 				return VolumeCreationOptions::FilesystemType::MacOsExt;
 #elif defined (TC_FREEBSD) || defined (TC_SOLARIS)
 				return VolumeCreationOptions::FilesystemType::UFS;
+#elif defined (TC_OPENBSD)
+				return VolumeCreationOptions::FilesystemType::FFS;
 #else
 				return VolumeCreationOptions::FilesystemType::FAT;
 #endif
@@ -90,6 +93,8 @@ namespace VeraCrypt
 				case VolumeCreationOptions::FilesystemType::APFS:		return "newfs_apfs";
 	#elif defined (TC_FREEBSD) || defined (TC_SOLARIS)
 				case VolumeCreationOptions::FilesystemType::UFS:		return "newfs" ;
+	#elif defined (TC_OPENBSD)
+				case VolumeCreationOptions::FilesystemType::FFS:		return "newfs" ;
 	#endif
 				default: return NULL;
 				}

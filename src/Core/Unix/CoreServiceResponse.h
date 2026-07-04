@@ -83,6 +83,14 @@ namespace VeraCrypt
 	};
 #endif
 
+#ifdef TC_OPENBSD
+	struct ExecuteOpenBSDFFSFormatterResponse : CoreServiceResponse
+	{
+		ExecuteOpenBSDFFSFormatterResponse () { }
+		TC_SERIALIZABLE (ExecuteOpenBSDFFSFormatterResponse);
+	};
+#endif
+
 	struct MountVolumeResponse : CoreServiceResponse
 	{
 		MountVolumeResponse () { }

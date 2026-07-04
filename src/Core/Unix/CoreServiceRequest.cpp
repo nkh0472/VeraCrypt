@@ -245,6 +245,32 @@ namespace VeraCrypt
 	}
 #endif
 
+#ifdef TC_OPENBSD
+	// ExecuteOpenBSDFFSFormatterRequest
+	void ExecuteOpenBSDFFSFormatterRequest::Deserialize (shared_ptr <Stream> stream)
+	{
+		CoreServiceRequest::Deserialize (stream);
+		Serializer sr (stream);
+		Device = sr.DeserializeWString ("Device");
+		sr.Deserialize ("OwnerGroupId", OwnerGroupId);
+		sr.Deserialize ("OwnerUserId", OwnerUserId);
+	}
+
+	bool ExecuteOpenBSDFFSFormatterRequest::RequiresElevation () const
+	{
+		return !Core->HasAdminPrivileges();
+	}
+
+	void ExecuteOpenBSDFFSFormatterRequest::Serialize (shared_ptr <Stream> stream) const
+	{
+		CoreServiceRequest::Serialize (stream);
+		Serializer sr (stream);
+		sr.Serialize ("Device", wstring (Device));
+		sr.Serialize ("OwnerGroupId", OwnerGroupId);
+		sr.Serialize ("OwnerUserId", OwnerUserId);
+	}
+#endif
+
 	// MountVolumeRequest
 	void MountVolumeRequest::Deserialize (shared_ptr <Stream> stream)
 	{
@@ -322,6 +348,9 @@ namespace VeraCrypt
 	TC_SERIALIZER_FACTORY_ADD_CLASS (ExitRequest);
 #ifdef TC_MACOSX
 	TC_SERIALIZER_FACTORY_ADD_CLASS (ExecuteMacOSXAPFSFormatterRequest);
+#endif
+#ifdef TC_OPENBSD
+	TC_SERIALIZER_FACTORY_ADD_CLASS (ExecuteOpenBSDFFSFormatterRequest);
 #endif
 	TC_SERIALIZER_FACTORY_ADD_CLASS (GetDeviceSectorSizeRequest);
 	TC_SERIALIZER_FACTORY_ADD_CLASS (GetDeviceSizeRequest);

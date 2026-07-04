@@ -415,6 +415,12 @@ namespace VeraCrypt
 					ArgFilesystem = VolumeCreationOptions::FilesystemType::NTFS;
 				else if (str.IsSameAs (L"exFAT", false))
 					ArgFilesystem = VolumeCreationOptions::FilesystemType::exFAT;
+#elif defined (TC_OPENBSD)
+				else if (str.IsSameAs (L"FFS", false) || str.IsSameAs (L"UFS", false))
+				{
+					ArgMountOptions.FilesystemType = L"ffs";
+					ArgFilesystem = VolumeCreationOptions::FilesystemType::FFS;
+				}
 #endif
 				else
 					throw_err (LangString["UNKNOWN_OPTION"] + L": " + str);

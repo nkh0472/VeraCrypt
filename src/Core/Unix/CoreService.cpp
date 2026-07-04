@@ -914,6 +914,168 @@ namespace VeraCrypt
 	}
 #endif
 
+#ifdef TC_OPENBSD
+	static bool ParseOpenBSDVndDevicePath (const string &path, bool rawDevice, string &deviceNumber)
+	{
+		const string prefix = rawDevice ? "/dev/rvnd" : "/dev/vnd";
+		if (path.find (prefix) != 0)
+			return false;
+
+		size_t numberStart = prefix.size();
+		size_t numberEnd = numberStart;
+		while (numberEnd < path.size() && path[numberEnd] >= '0' && path[numberEnd] <= '9')
+			++numberEnd;
+
+		if (numberEnd == numberStart)
+			return false;
+
+		if (numberEnd + 1 != path.size() || path[numberEnd] != 'c')
+			return false;
+
+		deviceNumber = path.substr (numberStart, numberEnd - numberStart);
+		return true;
+	}
+
+	static string GetOpenBSDVndBlockDevicePath (const DevicePath &rawDevice)
+	{
+		string deviceNumber;
+		if (!ParseOpenBSDVndDevicePath (string (rawDevice), true, deviceNumber))
+			throw ParameterIncorrect (SRC_POS);
+
+		return string ("/dev/vnd") + deviceNumber + "c";
+	}
+
+	static void ValidateOpenBSDVndDeviceNode (const string &path, bool rawDevice)
+	{
+		string deviceNumber;
+		if (!ParseOpenBSDVndDevicePath (path, rawDevice, deviceNumber))
+			throw ParameterIncorrect (SRC_POS);
+
+		struct stat sb;
+		if (lstat (path.c_str(), &sb) != 0)
+			throw ParameterIncorrect (SRC_POS);
+
+		if (rawDevice)
+		{
+			if (!S_ISCHR (sb.st_mode))
+				throw ParameterIncorrect (SRC_POS);
+		}
+		else if (!S_ISBLK (sb.st_mode))
+			throw ParameterIncorrect (SRC_POS);
+	}
+
+	static void ValidateOpenBSDFFSFormatterRequest (const ExecuteOpenBSDFFSFormatterRequest &request)
+	{
+		ValidateOpenBSDVndDeviceNode (string (request.Device), true);
+		ValidateOpenBSDVndDeviceNode (GetOpenBSDVndBlockDevicePath (request.Device), false);
+
+		if (request.OwnerUserId > static_cast <uint64> ((uid_t) -1)
+			|| request.OwnerGroupId > static_cast <uint64> ((gid_t) -1))
+		{
+			throw ParameterIncorrect (SRC_POS);
+		}
+	}
+
+	static list <string> BuildOpenBSDFFSFormatterArguments (const ExecuteOpenBSDFFSFormatterRequest &request)
+	{
+		ValidateOpenBSDFFSFormatterRequest (request);
+
+		list <string> arguments;
+		arguments.push_back (string (request.Device));
+		return arguments;
+	}
+
+	static DirectoryPath CreateOpenBSDFFSTemporaryMountPoint ()
+	{
+		string mountPointTemplate = "/tmp/veracrypt-ffs.XXXXXXXXXX";
+		vector <char> mountPoint (mountPointTemplate.begin(), mountPointTemplate.end());
+		mountPoint.push_back ('\0');
+
+		char *createdPath = mkdtemp (&mountPoint.front());
+		throw_sys_sub_if (!createdPath, mountPointTemplate);
+
+		return DirectoryPath (createdPath);
+	}
+
+	static void RemoveOpenBSDFFSTemporaryMountPoint (const DirectoryPath &mountPoint)
+	{
+		if (!mountPoint.IsEmpty())
+			rmdir (string (mountPoint).c_str());
+	}
+
+	static void MountOpenBSDFFSTemporaryFilesystem (const DevicePath &devicePath, const DirectoryPath &mountPoint)
+	{
+		list <string> args;
+		args.push_back ("-t");
+		args.push_back ("ffs");
+		args.push_back ("-o");
+		args.push_back ("nodev,nosuid,noexec");
+		args.push_back ("--");
+		args.push_back (devicePath);
+		args.push_back (mountPoint);
+
+		Process::Execute ("mount", args);
+	}
+
+	static void DismountOpenBSDFFSTemporaryFilesystem (const DirectoryPath &mountPoint)
+	{
+		list <string> args;
+		args.push_back ("--");
+		args.push_back (mountPoint);
+
+		for (int attempt = 0; true; ++attempt)
+		{
+			try
+			{
+				Process::Execute ("umount", args);
+				return;
+			}
+			catch (ExecutedProcessFailed&)
+			{
+				if (attempt >= 5)
+					throw;
+				Thread::Sleep (200);
+			}
+		}
+	}
+
+	static void SetOpenBSDFFSRootOwner (const ExecuteOpenBSDFFSFormatterRequest &request)
+	{
+		ValidateOpenBSDFFSFormatterRequest (request);
+
+		DirectoryPath mountPoint = CreateOpenBSDFFSTemporaryMountPoint();
+		bool mounted = false;
+
+		try
+		{
+			MountOpenBSDFFSTemporaryFilesystem (DevicePath (GetOpenBSDVndBlockDevicePath (request.Device)), mountPoint);
+			mounted = true;
+
+			string mountPointStr = mountPoint;
+			throw_sys_sub_if (chown (mountPointStr.c_str(), static_cast <uid_t> (request.OwnerUserId), static_cast <gid_t> (request.OwnerGroupId)) == -1, mountPointStr);
+
+			DismountOpenBSDFFSTemporaryFilesystem (mountPoint);
+			mounted = false;
+
+			throw_sys_sub_if (rmdir (mountPointStr.c_str()) == -1, mountPointStr);
+		}
+		catch (...)
+		{
+			if (mounted)
+			{
+				try
+				{
+					DismountOpenBSDFFSTemporaryFilesystem (mountPoint);
+				}
+				catch (...) { }
+			}
+
+			RemoveOpenBSDFFSTemporaryMountPoint (mountPoint);
+			throw;
+		}
+	}
+#endif
+
 	unique_ptr <Serializable> CoreService::GetResponseObject ()
 	{
 		unique_ptr <Serializable> deserializedObject (Serializable::DeserializeNew (ServiceOutputStream));
@@ -1131,6 +1293,18 @@ namespace VeraCrypt
 					}
 #endif
 
+#ifdef TC_OPENBSD
+					// ExecuteOpenBSDFFSFormatterRequest
+					ExecuteOpenBSDFFSFormatterRequest *executeFFSFormatterRequest = dynamic_cast <ExecuteOpenBSDFFSFormatterRequest*> (request.get());
+					if (executeFFSFormatterRequest)
+					{
+						Process::Execute (CoreService::GetOpenBSDFFSFormatterPath(), BuildOpenBSDFFSFormatterArguments (*executeFFSFormatterRequest));
+						SetOpenBSDFFSRootOwner (*executeFFSFormatterRequest);
+						ExecuteOpenBSDFFSFormatterResponse().Serialize (outputStream);
+						continue;
+					}
+#endif
+
 					// MountVolumeRequest
 					MountVolumeRequest *mountRequest = dynamic_cast <MountVolumeRequest*> (request.get());
 					if (mountRequest)
@@ -1234,6 +1408,19 @@ namespace VeraCrypt
 	{
 		ExecuteMacOSXAPFSFormatterRequest request (devicePath, userId, groupId);
 		SendRequest <ExecuteMacOSXAPFSFormatterResponse> (request);
+	}
+#endif
+
+#ifdef TC_OPENBSD
+	const char *CoreService::GetOpenBSDFFSFormatterPath ()
+	{
+		return "/sbin/newfs";
+	}
+
+	void CoreService::RequestExecuteOpenBSDFFSFormatter (const DevicePath &devicePath, uint64 userId, uint64 groupId)
+	{
+		ExecuteOpenBSDFFSFormatterRequest request (devicePath, userId, groupId);
+		SendRequest <ExecuteOpenBSDFFSFormatterResponse> (request);
 	}
 #endif
 

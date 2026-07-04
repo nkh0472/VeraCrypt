@@ -1373,6 +1373,10 @@ const FileManager fileManagers[] = {
 					" with option -t. Default type is 'auto'. When creating a new volume, this\n"
 					" option specifies the filesystem to be created on the new volume.\n"
 					" Filesystem type 'none' disables mounting or creating a filesystem.\n"
+#ifdef TC_OPENBSD
+					" On OpenBSD, filesystem type 'FFS' creates a native FFS volume and\n"
+					" mounts with filesystem type 'ffs'.\n"
+#endif
 #ifdef TC_LINUX
 					" On Linux, filesystem type 'ntfs3' mounts with the in-kernel ntfs3\n"
 					" driver and bypasses mount helpers. Filesystem type 'kernel-ntfs'\n"
