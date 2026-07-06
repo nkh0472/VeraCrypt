@@ -53,6 +53,10 @@
 			<param name="Local" value="Supported Systems for System Encryption.html">
 			</OBJECT>
 		<LI> <OBJECT type="text/sitemap">
+			<param name="Name" value="EFI°²È«Æô¶¯">
+			<param name="Local" value="EFISecureBoot.html">
+			</OBJECT>
+		<LI> <OBJECT type="text/sitemap">
 			<param name="Name" value="VeraCrypt¼±¾ÈÅÌ">
 			<param name="Local" value="VeraCrypt Rescue Disk.html">
 			</OBJECT>

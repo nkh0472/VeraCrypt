@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<title>VeraCrypt - Free Open source disk encryption with strong security for the Paranoid</title>
+<meta name="description" content="VeraCrypt is free open-source disk encryption software for Windows, Mac OS X and Linux. In case an attacker forces you to reveal the password, VeraCrypt provides plausible deniability. In contrast to file encryption, data encryption performed by VeraCrypt is real-time (on-the-fly), automatic, transparent, needs very little memory, and does not involve temporary unencrypted files."/>
+<meta name="keywords" content="encryption, security"/>
+<link href="styles.css" rel="stylesheet" type="text/css" />
+</head>
+<body>
+
+<div>
+<a href="Documentation.html"><img src="VeraCrypt128x128.png" alt="VeraCrypt"/></a>
+</div>
+
+<div id="menu">
+	<ul>
+	  <li><a href="Home.html">Home</a></li>
+	  <li><a href="Code.html">Source Code</a></li>
+	  <li><a href="Downloads.html">Downloads</a></li>
+	  <li><a class="active" href="Documentation.html">Documentation</a></li>
+	  <li><a href="Donation.html">Donate</a></li>
+	  <li><a href="https://sourceforge.net/p/veracrypt/discussion/" target="_blank">Forums</a></li>
+	</ul>
+</div>
+
+<div>
+<p>
+<a href="Documentation.html">Documentation</a>
+<img src="arrow_right.gif" alt=">>" style="margin-top: 5px">
+<a href="System%20Encryption.html">System Encryption</a>
+<img src="arrow_right.gif" alt=">>" style="margin-top: 5px">
+<a href="EFISecureBoot.html">EFI Secure Boot</a>
+</p></div>
+
+<div class="wikidoc">
+<h1>EFI Secure Boot</h1>
+
+<div style="text-align:left; margin-top:19px; margin-bottom:19px; padding-top:0px; padding-bottom:0px">
+VeraCrypt system encryption is compatible with EFI Secure Boot: the VeraCrypt EFI bootloaders are signed by Microsoft through the Microsoft third-party UEFI signing program, so they can be verified by the firmware using the standard Microsoft certificates without enrolling any custom key. This page explains how VeraCrypt selects its signed bootloaders, how this interacts with the Microsoft Secure Boot certificate transition from the 2011 certificate authorities (CAs) to the 2023 CAs, and how to diagnose and recover from Secure Boot related boot failures.
+</div>
+
+<h2>Signed bootloader sets</h2>
+<div style="text-align:left; margin-top:19px; margin-bottom:19px; padding-top:0px; padding-bottom:0px">
+Since version 1.26.29, VeraCrypt ships two complete sets of Microsoft-signed EFI bootloaders:
+</div>
+<ul style="text-align:left; margin-top:18px; margin-bottom:19px; padding-top:0px; padding-bottom:0px">
+<li style="text-align:left; margin-top:0px; margin-bottom:0px; padding-top:0px; padding-bottom:0px">
+<strong>2011 set:</strong> signed through <em>Microsoft Corporation UEFI CA 2011</em>. This is the CA that firmware has used for third-party bootloaders since the introduction of Secure Boot.
+</li>
+<li style="text-align:left; margin-top:0px; margin-bottom:0px; padding-top:0px; padding-bottom:0px">
+<strong>2023 set:</strong> signed through the renewed Microsoft third-party CAs. The main loader (<code>DcsBoot.efi</code>) is signed through <em>Microsoft UEFI CA 2023</em>, while other components (<code>DcsInt.dcs</code>, <code>LegacySpeaker.dcs</code>) are signed through <em>Microsoft Option ROM UEFI CA 2023</em>. For this reason, the 2023 set requires <strong>both</strong> <em>Microsoft UEFI CA 2023</em> and <em>Microsoft Option ROM UEFI CA 2023</em> to be present in the firmware Secure Boot signature database (db).
+</li>
+</ul>
+<div style="text-align:left; margin-top:19px; margin-bottom:19px; padding-top:0px; padding-bottom:0px">
+At installation, upgrade, repair and system encryption time, VeraCrypt reads the firmware db and selects the loader set whose signing CAs are trusted. If the 2023 CA pair is present, the 2023 set is preferred; otherwise the 2011 set is used when <em>Microsoft Corporation UEFI CA 2011</em> is trusted. If Secure Boot is enabled and neither set is trusted by the firmware, VeraCrypt refuses to install its bootloader and displays an error instead of installing a loader that the firmware would reject at the next reboot.
+</div>
+<div style="text-align:left; margin-top:19px; margin-bottom:19px; padding-top:0px; padding-bottom:0px">
+Changing the firmware Secure Boot configuration (for example enabling additional certificates in the BIOS setup) does not by itself rewrite the files already installed on the EFI System Partition. Run VeraCrypt Setup in <em>Repair/Reinstall</em> mode after changing the firmware Secure Boot database, or let the VeraCrypt System Favorites service refresh the loader automatically (it re-evaluates the selection at Windows startup, session logon/unlock, resume from sleep, and shutdown).
+</div>
+
+<h2>Diagnostics</h2>
+<div style="text-align:left; margin-top:19px; margin-bottom:19px; padding-top:0px; padding-bottom:0px">
+VeraCrypt records which loader set was installed and why under the following registry key:
+</div>
+<pre>
+HKEY_LOCAL_MACHINE\SOFTWARE\VeraCrypt\Diagnostics\EfiBootLoader
+    EfiBootLoaderResourceSet          REG_DWORD  2011 (0x7db) or 2023 (0x7e7)
+    EfiBootLoaderSelectionReason      REG_SZ     human readable selection reason
+    EfiBootLoaderFirmwareDbLastError  REG_DWORD  last firmware db read/parse error (0 = none)
+    EfiBootLoaderSelectionTimeUtc     REG_SZ     time of the last selection
+</pre>
+<div style="text-align:left; margin-top:19px; margin-bottom:19px; padding-top:0px; padding-bottom:0px">
+The following commands, run from an elevated PowerShell prompt, show which Microsoft certificates are present in the firmware db (note that on some firmware the names may not be visible in this simple text search even when the certificates are present):
+</div>
+<pre>
+reg query HKLM\SOFTWARE\VeraCrypt\Diagnostics\EfiBootLoader /s
+
+$t = [Text.Encoding]::ASCII.GetString((Get-SecureBootUEFI db).Bytes)
+'Microsoft Corporation UEFI CA 2011',
+'Microsoft Windows Production PCA 2011',
+'Windows UEFI CA 2023',
+'Microsoft UEFI CA 2023',
+'Microsoft Option ROM UEFI CA 2023' |
+  ForEach-Object { "$_ : $($t -match [regex]::Escape($_))" }
+</pre>
+<div style="text-align:left; margin-top:19px; margin-bottom:19px; padding-top:0px; padding-bottom:0px">
+In addition, the VeraCrypt System Favorites service writes a warning to the Windows Application event log (source <em>VeraCryptSystemFavorites</em>) when it detects that the active Secure Boot db no longer trusts a component of the installed boot chain.
+</div>
+
+<h2>The Microsoft 2023 certificate transition</h2>
+<div style="text-align:left; margin-top:19px; margin-bottom:19px; padding-top:0px; padding-bottom:0px">
+The Microsoft Secure Boot certificates from 2011 expire in 2026: <em>Microsoft Corporation KEK CA 2011</em> and <em>Microsoft Corporation UEFI CA 2011</em> expired in June 2026, and <em>Microsoft Windows Production PCA 2011</em> expires in October 2026. Microsoft replaces them with 2023 CAs and distributes the new certificates, as well as a Windows Boot Manager signed by <em>Windows UEFI CA 2023</em>, through Windows Update.
+</div>
+<div style="text-align:left; margin-top:19px; margin-bottom:19px; padding-top:0px; padding-bottom:0px">
+Two important points for VeraCrypt users:
+</div>
+<ul style="text-align:left; margin-top:18px; margin-bottom:19px; padding-top:0px; padding-bottom:0px">
+<li style="text-align:left; margin-top:0px; margin-bottom:0px; padding-top:0px; padding-bottom:0px">
+<strong>Certificate expiration does not stop already-installed loaders from booting.</strong> UEFI firmware does not evaluate certificate validity periods during Secure Boot verification, so bootloaders signed through the 2011 CAs continue to load after the expiration dates on virtually all firmware implementations. The expiration means that <em>new</em> binaries can no longer be signed through the 2011 CAs, and that systems which never receive the 2023 certificates will stop receiving boot-chain security updates.
+</li>
+<li style="text-align:left; margin-top:0px; margin-bottom:0px; padding-top:0px; padding-bottom:0px">
+<strong>A future revocation of the 2011 CAs would stop them from booting.</strong> Microsoft has announced that, at a later stage of the transition (not yet scheduled), the 2011 CAs may be revoked via the Secure Boot forbidden signature database (dbx) on systems that have completed the transition. Migrating to the 2023 loader set before that stage is therefore recommended.
+</li>
+</ul>
+
+<h2>New computers that trust only the 2023 CAs</h2>
+<div style="text-align:left; margin-top:19px; margin-bottom:19px; padding-top:0px; padding-bottom:0px">
+Some recent computers ship from the factory with a Secure Boot configuration that contains only <em>Windows UEFI CA 2023</em> and no Microsoft third-party CAs at all. On such systems, the two third-party CAs required by the VeraCrypt 2023 loader set (<em>Microsoft UEFI CA 2023</em> and <em>Microsoft Option ROM UEFI CA 2023</em>) must first be enabled in the firmware setup. The option is typically called <em>&quot;Allow Microsoft 3rd Party UEFI CA&quot;</em>, <em>&quot;Third-Party CA&quot;</em> or <em>&quot;Third-Party Certificates&quot;</em>. After enabling it, run VeraCrypt Setup in Repair/Reinstall mode (or start system encryption) so that VeraCrypt selects the 2023 loader set.
+</div>
+<div style="text-align:left; margin-top:19px; margin-bottom:19px; padding-top:0px; padding-bottom:0px">
+If the firmware provides no way to trust a Microsoft third-party CA, VeraCrypt system encryption cannot be used with Secure Boot enabled on that machine.
+</div>
+
+<h2>Updating an existing system to the 2023 certificates</h2>
+<div style="text-align:left; margin-top:19px; margin-bottom:19px; padding-top:0px; padding-bottom:0px">
+Windows deploys the 2023 certificates through a staged, telemetry-driven rollout. Devices are updated automatically only once Microsoft has high confidence in their hardware/firmware combination. Because a system-encrypted VeraCrypt machine boots through a non-standard boot chain (the VeraCrypt loader occupies the Windows Boot Manager location), such machines are typically not classified for automatic update and the rollout does not trigger on its own. The Windows Security app may report that there is <em>&quot;not yet enough data to classify your device&quot;</em>. For the same reason, opting into the Microsoft-managed rollout (the <code>MicrosoftUpdateManagedOptIn</code> registry value) may not be sufficient on these machines.
+</div>
+<div style="text-align:left; margin-top:19px; margin-bottom:19px; padding-top:0px; padding-bottom:0px">
+Microsoft documents a registry value that triggers the update explicitly (see Microsoft KB5068202, <em>&quot;Registry key updates for Secure Boot&quot;</em>). From an elevated command prompt:
+</div>
+<pre>
+reg add HKLM\SYSTEM\CurrentControlSet\Control\Secureboot /v AvailableUpdates /t REG_DWORD /d 0x5944 /f
+
+rem optionally run the servicing task immediately (it otherwise runs every 12 hours):
+schtasks /Run /TN "\Microsoft\Windows\PI\Secure-Boot-Update"
+</pre>
+<div style="text-align:left; margin-top:19px; margin-bottom:19px; padding-top:0px; padding-bottom:0px">
+Progress can be monitored under <code>HKLM\SYSTEM\CurrentControlSet\Control\Secureboot\Servicing</code> (values <code>UEFICA2023Status</code> and <code>UEFICA2023Error</code>) and through Secure Boot servicing events in the Windows event log. The db update adds <em>Windows UEFI CA 2023</em>, and, on systems that already trust <em>Microsoft Corporation UEFI CA 2011</em> (which is the case on every VeraCrypt Secure Boot system), it also adds <em>Microsoft UEFI CA 2023</em> and <em>Microsoft Option ROM UEFI CA 2023</em>.
+</div>
+<div style="text-align:left; margin-top:19px; margin-bottom:19px; padding-top:0px; padding-bottom:0px">
+Before triggering the update on a VeraCrypt system-encrypted machine, take the following precautions:
+</div>
+<ul style="text-align:left; margin-top:18px; margin-bottom:19px; padding-top:0px; padding-bottom:0px">
+<li style="text-align:left; margin-top:0px; margin-bottom:0px; padding-top:0px; padding-bottom:0px">
+<strong>Update the BIOS/UEFI firmware to the latest version available from the computer manufacturer first.</strong> Failures to write the new certificates to the firmware Secure Boot database are usually caused by firmware bugs, and Microsoft recommends checking with the device manufacturer for updated firmware before applying the certificate updates.
+</li>
+<li style="text-align:left; margin-top:0px; margin-bottom:0px; padding-top:0px; padding-bottom:0px">
+<strong>Create or update your VeraCrypt Rescue Disk first</strong>, and verify that it boots.
+</li>
+<li style="text-align:left; margin-top:0px; margin-bottom:0px; padding-top:0px; padding-bottom:0px">
+Do not disable the <em>VeraCrypt System Favorites</em> service or its bootloader update function. When the Windows servicing task installs the 2023-signed Windows Boot Manager at the standard location, this service is what preserves the VeraCrypt boot chain: it saves the new boot manager as <code>bootmgfw_ms.vc</code> (the copy VeraCrypt chainloads after pre-boot authentication) and restores the VeraCrypt loader.
+</li>
+<li style="text-align:left; margin-top:0px; margin-bottom:0px; padding-top:0px; padding-bottom:0px">
+<strong>Hidden operating system users should not trigger the update from the hidden OS.</strong> The automatic boot-chain preservation is disabled when a hidden OS is running.
+</li>
+<li style="text-align:left; margin-top:0px; margin-bottom:0px; padding-top:0px; padding-bottom:0px">
+Avoid forced power-off between the moment Windows replaces the boot manager and the next normal restart or shutdown. On most systems the VeraCrypt boot entry keeps the machine bootable during this window, but firmware that ignores the boot order could boot the plain Windows Boot Manager, which cannot start an encrypted Windows (recoverable with the Rescue Disk).
+</li>
+<li style="text-align:left; margin-top:0px; margin-bottom:0px; padding-top:0px; padding-bottom:0px">
+Expect Windows to keep reporting the Secure Boot certificate servicing as not fully completed even after everything works. Windows checks whether the file at the standard boot manager location is the 2023-signed Microsoft Boot Manager; on a VeraCrypt system that location holds the VeraCrypt loader by design. This status is cosmetic and does not affect the security or operation of the system.
+</li>
+</ul>
+<div style="text-align:left; margin-top:19px; margin-bottom:19px; padding-top:0px; padding-bottom:0px">
+After the db update has been applied, VeraCrypt automatically switches to the 2023 loader set the next time the bootloader is refreshed (Repair/Reinstall, upgrade, or one of the automatic refresh points of the System Favorites service). You can verify the result in the diagnostics registry key described above and recreate the Rescue Disk when prompted.
+</div>
+
+<h2>Recovering from a Secure Boot boot failure</h2>
+<div style="text-align:left; margin-top:19px; margin-bottom:19px; padding-top:0px; padding-bottom:0px">
+Two distinct failures can occur when the firmware Secure Boot configuration no longer trusts a component of the boot chain:
+</div>
+<ul style="text-align:left; margin-top:18px; margin-bottom:19px; padding-top:0px; padding-bottom:0px">
+<li style="text-align:left; margin-top:0px; margin-bottom:0px; padding-top:0px; padding-bottom:0px">
+<strong>Before the password prompt</strong> (message such as <em>&quot;Secure Boot Violation&quot;</em> or an immediate return to the firmware): the firmware does not trust the CA that signs the installed VeraCrypt loader.
+</li>
+<li style="text-align:left; margin-top:0px; margin-bottom:0px; padding-top:0px; padding-bottom:0px">
+<strong>After successful password entry</strong> (an explicit Secure Boot error message from the VeraCrypt loader, or on older loader versions a return to the password prompt): the firmware does not trust the CA that signs the Windows Boot Manager copy (<code>bootmgfw_ms.vc</code>) that VeraCrypt chainloads.
+</li>
+</ul>
+<div style="text-align:left; margin-top:19px; margin-bottom:19px; padding-top:0px; padding-bottom:0px">
+In both cases, the recovery procedure is:
+</div>
+<ol style="text-align:left; margin-top:18px; margin-bottom:19px; padding-top:0px; padding-bottom:0px">
+<li style="text-align:left; margin-top:0px; margin-bottom:0px; padding-top:0px; padding-bottom:0px">
+Temporarily disable Secure Boot in the firmware setup and start Windows normally (VeraCrypt pre-boot authentication works with Secure Boot disabled), or boot the VeraCrypt Rescue Disk and use <em>&quot;Restore VeraCrypt loader binaries to system disk&quot;</em>.
+</li>
+<li style="text-align:left; margin-top:0px; margin-bottom:0px; padding-top:0px; padding-bottom:0px">
+In Windows, adjust the firmware/Windows Secure Boot certificates as needed (enable the third-party CAs in the firmware setup, or apply the Windows Secure Boot certificate updates as described above), then run VeraCrypt Setup in Repair/Reinstall mode.
+</li>
+<li style="text-align:left; margin-top:0px; margin-bottom:0px; padding-top:0px; padding-bottom:0px">
+Re-enable Secure Boot.
+</li>
+</ol>
+
+<h2>Legacy custom-key procedure (deprecated)</h2>
+<div style="text-align:left; margin-top:19px; margin-bottom:19px; padding-top:0px; padding-bottom:0px">
+Older VeraCrypt versions documented a custom-key procedure (the VeraCrypt-DCS <em>SecureBoot</em> script, <code>sb_set_siglists.ps1</code>) that replaced the firmware Secure Boot databases with a custom platform key and the 2011-era Microsoft certificates. This procedure is <strong>deprecated and must not be used</strong> on systems using the 2023 certificate chain: it removes trust for the 2023-signed Windows Boot Manager and breaks the Windows boot process after VeraCrypt pre-boot authentication. Systems where it was applied should restore the manufacturer Secure Boot keys, then follow the normal procedure described on this page.
+</div>
+
+<div style="text-align:left; margin-top:19px; margin-bottom:19px; padding-top:0px; padding-bottom:0px">
+&nbsp;</div>
+<div style="text-align:left; margin-top:19px; margin-bottom:19px; padding-top:0px; padding-bottom:0px">
+<a href="VeraCrypt%20Rescue%20Disk.html" style="text-align:left; color:#0080c0; text-decoration:none; font-weight:bold">Next Section &gt;&gt;</a></div>
+</div><div class="ClearBoth"></div></body></html>
