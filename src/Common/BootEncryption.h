@@ -232,6 +232,18 @@ namespace VeraCrypt
 		std::wstring BootVolumePath;
 	};
 
+	// Trust facts about the installed EFI boot chain, derived from the active Secure Boot db.
+	// Only valid when StatusKnown is true: partial or malformed firmware data never asserts facts.
+	struct EfiBootChainTrustStatus
+	{
+		bool StatusKnown;              // Secure Boot state read and firmware db parsed completely
+		bool SecureBootEnabled;
+		bool VeraCryptLoaderTrusted;   // signing CA(s) of the installed VeraCrypt EFI loader set found in db
+		bool WindowsLoaderSignerKnown; // signer family of EFI\Microsoft\Boot\bootmgfw_ms.vc identified
+		bool WindowsLoaderTrusted;     // signing CA of bootmgfw_ms.vc found in db
+		DWORD InstalledResourceSet;    // VC_EFI_BOOT_LOADER_RESOURCE_SET_2011 or VC_EFI_BOOT_LOADER_RESOURCE_SET_2023
+	};
+
 	class BootEncryption
 	{
 	public:
@@ -319,6 +331,7 @@ namespace VeraCrypt
 		static void UpdateSetupConfigFile (bool bForInstall);
 		void GetSecureBootConfig (BOOL* pSecureBootEnabled, BOOL *pVeraCryptKeysLoaded);
 		void GetEfiBootLoaderSigningSupport (BOOL* pMicrosoft2023UefiCAsSupported);
+		bool GetEfiBootChainTrustStatus (EfiBootChainTrustStatus& status);
 		bool IsUsingUnsupportedAlgorithm(LONG driverVersion);
 		void NotifyService (DWORD dwNotifyCmd);
 	protected:

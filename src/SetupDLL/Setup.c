@@ -94,6 +94,15 @@ BOOL bUpdateRescueDisk = FALSE;
 BOOL bRepairMode = FALSE;
 BOOL bUserSetLanguage = FALSE;
 
+static BOOL EfiBootLoaderSelectionWasRefused ()
+{
+	DWORD resourceSet = 0;
+	return ReadLocalMachineRegistryDword (
+		(wchar_t *) VC_EFI_BOOT_LOADER_DIAGNOSTICS_REGISTRY_KEY,
+		(wchar_t *) VC_EFI_BOOT_LOADER_RESOURCE_SET_VALUE_NAME,
+		&resourceSet) && resourceSet == 0;
+}
+
 /*
 BOOL bMakePackage = FALSE;
 BOOL bDone = FALSE;
@@ -1816,6 +1825,30 @@ BOOL UpgradeBootLoader_Dll (MSIHANDLE hInstaller, HWND hwndDlg)
 
 			// this is done by the service now
 			//bootEnc.InstallBootLoader (true);
+
+			// Verify the installed boot chain against the active Secure Boot db before the user
+			// reboots: a component that the firmware no longer trusts (e.g. after a Secure Boot
+			// certificate update) would otherwise only surface as a pre-boot failure. In the MSI
+			// upgrade path, the System Favorites service has already attempted the loader refresh.
+			try
+			{
+				if (EfiBootLoaderSelectionWasRefused ())
+				{
+					MSILogAndShow (hInstaller, MSI_WARNING_LEVEL, GetString("SYSENC_EFI_UNSUPPORTED_SECUREBOOT_CA"));
+				}
+				else
+				{
+					EfiBootChainTrustStatus trustStatus;
+					if (bootEnc.GetEfiBootChainTrustStatus (trustStatus) && trustStatus.StatusKnown && trustStatus.SecureBootEnabled)
+					{
+						if (!trustStatus.VeraCryptLoaderTrusted)
+							MSILogAndShow (hInstaller, MSI_WARNING_LEVEL, GetString("SYSENC_EFI_LOADER_NOT_TRUSTED_BY_SECUREBOOT"));
+						else if (trustStatus.WindowsLoaderSignerKnown && !trustStatus.WindowsLoaderTrusted)
+							MSILogAndShow (hInstaller, MSI_WARNING_LEVEL, GetString("SYSENC_EFI_WINDOWS_LOADER_NOT_TRUSTED_BY_SECUREBOOT"));
+					}
+				}
+			}
+			catch (...) { }
 
 			if (bootEnc.GetInstalledBootLoaderVersion() <= TC_RESCUE_DISK_UPGRADE_NOTICE_MAX_VERSION)
 			{

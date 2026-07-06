@@ -10827,6 +10827,22 @@ static void SystemFavoritesServiceLogInfo (const wstring &infoMessage)
 	SystemFavoritesServiceLogMessage (infoMessage, EVENTLOG_INFORMATION_TYPE);
 }
 
+static bool IsUnsupportedEfiSecureBootDbException (const ErrorException &e)
+{
+	return e.ErrLangId && strcmp (e.ErrLangId, "SYSENC_EFI_UNSUPPORTED_SECUREBOOT_CA") == 0;
+}
+
+static void SystemFavoritesServiceLogBootLoaderUpdateError (const wchar_t *operation, const ErrorException &e)
+{
+	if (IsUnsupportedEfiSecureBootDbException (e))
+	{
+		SystemFavoritesServiceLogError (wstring (operation) + L" failed: Secure Boot is enabled, but the firmware Secure Boot db does not trust any Microsoft UEFI CA set supported by VeraCrypt. See HKLM\\SOFTWARE\\VeraCrypt\\Diagnostics\\EfiBootLoader for the recorded selection reason.");
+		return;
+	}
+
+	SystemFavoritesServiceLogError (wstring (operation) + L" failed while updating the boot loader.");
+}
+
 
 static void SystemFavoritesServiceSetStatus (DWORD status, DWORD waitHint = 0)
 {
@@ -10884,7 +10900,27 @@ static void SystemFavoritesServiceUpdateLoaderProcessing (BOOL bForce)
 				SystemFavoritesServiceLogInfo (L"SystemFavoritesServiceUpdateLoaderProcessing: InstallBootLoader calling");
 				bootEnc.InstallBootLoader (true);
 				SystemFavoritesServiceLogInfo (L"SystemFavoritesServiceUpdateLoaderProcessing: InstallBootLoader called");
+
+				// Record in the event log when the active Secure Boot db no longer trusts a
+				// component of the boot chain (e.g. after a Secure Boot certificate update),
+				// so that a subsequent pre-boot failure can be diagnosed from Windows.
+				try
+				{
+					EfiBootChainTrustStatus trustStatus;
+					if (bootEnc.GetEfiBootChainTrustStatus (trustStatus) && trustStatus.StatusKnown && trustStatus.SecureBootEnabled)
+					{
+						if (!trustStatus.VeraCryptLoaderTrusted)
+							SystemFavoritesServiceLogWarning (L"Secure Boot chain check: the firmware Secure Boot db does not trust the Microsoft UEFI CA that signs the installed VeraCrypt EFI bootloader. Pre-boot authentication may fail at the next reboot.");
+						else if (trustStatus.WindowsLoaderSignerKnown && !trustStatus.WindowsLoaderTrusted)
+							SystemFavoritesServiceLogWarning (L"Secure Boot chain check: the firmware Secure Boot db does not trust the Microsoft CA that signs the Windows boot manager copy used by VeraCrypt (bootmgfw_ms.vc). The handoff to Windows after pre-boot authentication may fail at the next reboot.");
+					}
+				}
+				catch (...) { }
 			}
+		}
+		catch (ErrorException &e)
+		{
+			SystemFavoritesServiceLogBootLoaderUpdateError (L"SystemFavoritesServiceUpdateLoaderProcessing", e);
 		}
 		catch (Exception &)
 		{
@@ -11201,6 +11237,10 @@ int WINAPI wWinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, wchar_t *lpsz
 				BootEncryption bootEnc (NULL, updateOptions.PostOOBE, updateOptions.SetBootEntry, updateOptions.ForceFirstBootEntry, updateOptions.ForceSetNextBoot);
 				bootEnc.InstallBootLoader (true);
 			}
+		}
+		catch (ErrorException &e)
+		{
+			SystemFavoritesServiceLogBootLoaderUpdateError (L"PostOOBE boot loader update", e);
 		}
 		catch (Exception &)
 		{

@@ -1799,6 +1799,22 @@ BOOL UpgradeBootLoader (HWND hwndDlg)
 
 			bootEnc.InstallBootLoader (true);
 
+			// Verify the whole boot chain against the active Secure Boot db before the user
+			// reboots: a component that the firmware no longer trusts (e.g. after a Secure Boot
+			// certificate update) would otherwise only surface as a pre-boot failure.
+			try
+			{
+				EfiBootChainTrustStatus trustStatus;
+				if (bootEnc.GetEfiBootChainTrustStatus (trustStatus) && trustStatus.StatusKnown && trustStatus.SecureBootEnabled)
+				{
+					if (!trustStatus.VeraCryptLoaderTrusted)
+						Warning ("SYSENC_EFI_LOADER_NOT_TRUSTED_BY_SECUREBOOT", hwndDlg);
+					else if (trustStatus.WindowsLoaderSignerKnown && !trustStatus.WindowsLoaderTrusted)
+						Warning ("SYSENC_EFI_WINDOWS_LOADER_NOT_TRUSTED_BY_SECUREBOOT", hwndDlg);
+				}
+			}
+			catch (...) { }
+
 			if (bootEnc.GetInstalledBootLoaderVersion() <= TC_RESCUE_DISK_UPGRADE_NOTICE_MAX_VERSION)
 			{
 				bUpdateRescueDisk = TRUE;
