@@ -994,8 +994,8 @@
     <entry lang="zh-cn" key="SIZE_ITEM">大小：</entry>
     <entry lang="zh-cn" key="PATH_ITEM">路径：</entry>
     <entry lang="zh-cn" key="DRIVE_LETTER_ITEM">盘符：</entry>
-    <entry lang="zh-cn" key="UNSUPPORTED_CHARS_IN_PWD">错误：密码必须仅包含 ASCII 字符。\n\n密码中的非 ASCII 字符可能导致操作系统配置更改时加密卷无法加载。\n\n允许使用以下字符：\n\n! " # $ % &amp; ' ( ) * + , - . / 0 1 2 3 4 5 6 7 8 9 : ; < = > ? @ A B C D E F G H I J K L M N O P Q R S T U V W X Y Z [ \ ] ^ _ ` a b c d e f g h i j k l m n o p q r s t u v w x y z { | } ~ |</entry>
-    <entry lang="zh-cn" key="UNSUPPORTED_CHARS_IN_PWD_RECOM">警告：密码中包含非 ASCII 字符。可能导致操作系统配置更改时加密卷无法加载。\n\n您应使用 ASCII 字符替换密码中的非 ASCII 字符。如需操作，请点击“加密卷”-&gt;“修改加密卷密码”。\n\n以下为 ASCII 字符：\n\n! " # $ % &amp; ' ( ) * + , - . / 0 1 2 3 4 5 6 7 8 9 : ; < = > ? @ A B C D E F G H I J K L M N O P Q R S T U V W X Y Z [ \ ] ^ _ ` a b c d e f g h i j k l m n o p q r s t u v w x y z { | } ~ |</entry>
+    <entry lang="zh-cn" key="UNSUPPORTED_CHARS_IN_PWD">错误：密码必须仅包含 ASCII 字符。\n\n密码中的非 ASCII 字符可能导致操作系统配置更改时加密卷无法加载。\n\n允许使用以下字符：\n\n! " # $ % &amp; ' ( ) * + , - . / 0 1 2 3 4 5 6 7 8 9 : ; &lt; = &gt; ? @ A B C D E F G H I J K L M N O P Q R S T U V W X Y Z [ \ ] ^ _ ` a b c d e f g h i j k l m n o p q r s t u v w x y z { | } ~ |</entry>
+    <entry lang="zh-cn" key="UNSUPPORTED_CHARS_IN_PWD_RECOM">警告：密码中包含非 ASCII 字符。可能导致操作系统配置更改时加密卷无法加载。\n\n您应使用 ASCII 字符替换密码中的非 ASCII 字符。如需操作，请点击“加密卷”-&gt;“修改加密卷密码”。\n\n以下为 ASCII 字符：\n\n! " # $ % &amp; ' ( ) * + , - . / 0 1 2 3 4 5 6 7 8 9 : ; &lt; = &gt; ? @ A B C D E F G H I J K L M N O P Q R S T U V W X Y Z [ \ ] ^ _ ` a b c d e f g h i j k l m n o p q r s t u v w x y z { | } ~ |</entry>
     <entry lang="zh-cn" key="EXE_FILE_EXTENSION_CONFIRM">警告：我们强烈建议您避免使用可执行文件扩展名（例如 .exe、.sys、.dll）或其他可能有问题的类似扩展名作为加密卷文件名。使用这些扩展名通常会导致 Windows 或杀毒软件干预加密卷，这可能严重影响加密卷性能，也可能导致其他严重问题。\n\n我们强烈建议您移除或更改此扩展名（例如改为 .iso、.img、.dat）。\n\n您确认要继续使用可能有潜在问题的扩展名吗？</entry>
     <entry lang="zh-cn" key="EXE_FILE_EXTENSION_MOUNT_WARNING">警告：此加密卷文件名带有可执行文件扩展名（例如 .exe、.sys、.dll）或其他可能有问题的类似扩展名。这很可能导致 Windows 或杀毒软件干预加密卷，严重影响加密卷性能，也可能导致其他严重问题。\n\n我们强烈建议您在卸载加密卷后移除或更改此扩展名（例如改为 .iso、.img、.dat）。</entry>
     <entry lang="zh-cn" key="HOMEPAGE">主页（联网）</entry>
