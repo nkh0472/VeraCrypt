@@ -1650,8 +1650,8 @@
     <entry lang="zh-cn" key="IDC_SECURE_DESKTOP_ENABLE_IME">在安全桌面中启用输入法编辑器（IME）</entry>
     <entry lang="zh-cn" key="ENABLE_IME_IN_SECURE_DESKTOP_WARNING">警告：仅当您在安全桌面下选择密钥文件/令牌时遇到问题时，才启用此选项。</entry>
     <entry lang="zh-cn" key="ERR_KEY_DERIVATION_FAILED">密钥派生失败。这可能由内存不足或操作被中断导致。</entry>
-    <entry lang="zh-cn" key="EFI_MS_BOOT_LOADER_RESTORE_FAILED">系统分区/驱动器已解密，但 EFI Microsoft 引导加载程序路径未恢复到 Windows 启动管理器。仅需修复 EFI 引导文件。请使用 VeraCrypt 应急盘修复选项，或启动 Windows 恢复介质，运行 'bcdboot W:\Windows /s S: /f UEFI'（将 W: 替换为 Windows 卷的盘符，S: 替换为 EFI 系统分区的盘符）。路径：</entry>
-    <entry lang="zh-cn" key="EFI_FALLBACK_BOOT_LOADER_STILL_VERACRYPT">系统分区/驱动器已解密，但 EFI 回退引导加载程序路径中仍包含 VeraCrypt 引导加载程序。仅需修复 EFI 引导文件。请使用 VeraCrypt 应急盘修复选项，或启动 Windows 恢复介质，运行 'bcdboot W:\Windows /s S: /f UEFI'（将 W: 替换为 Windows 卷的盘符，S: 替换为 EFI 系统分区的盘符）。路径：</entry>
+    <entry lang="zh-cn" key="EFI_MS_BOOT_LOADER_RESTORE_FAILED">系统分区/驱动器已解密，但 EFI Microsoft 引导加载程序路径未恢复到 Windows 启动管理器。仅需修复 EFI 引导文件。请使用 VeraCrypt 应急盘修复选项，或启动 Windows 恢复介质，运行 'bcdboot W:\\Windows /s S: /f UEFI'（将 W: 替换为 Windows 卷的盘符，S: 替换为 EFI 系统分区的盘符）。路径：</entry>
+    <entry lang="zh-cn" key="EFI_FALLBACK_BOOT_LOADER_STILL_VERACRYPT">系统分区/驱动器已解密，但 EFI 回退引导加载程序路径中仍包含 VeraCrypt 引导加载程序。仅需修复 EFI 引导文件。请使用 VeraCrypt 应急盘修复选项，或启动 Windows 恢复介质，运行 'bcdboot W:\\Windows /s S: /f UEFI'（将 W: 替换为 Windows 卷的盘符，S: 替换为 EFI 系统分区的盘符）。路径：</entry>
     <entry lang="zh-cn" key="IDM_REPAIR_EFI_BOOT_LOADER">修复 EFI 引导加载程序...</entry>
     <entry lang="zh-cn" key="CONFIRM_REPAIR_EFI_BOOT_LOADER">VeraCrypt 将还原 Windows EFI 引导加载程序路径，并移除 VeraCrypt EFI 引导项和文件。\n\n仅在系统分区/驱动器已完全解密且 Windows 无需系统加密即可启动后使用。\n\n是否继续？</entry>
     <entry lang="zh-cn" key="EFI_BOOT_LOADER_FILE_READ_FAILED">无法完整读取 EFI 引导加载程序文件：</entry>
